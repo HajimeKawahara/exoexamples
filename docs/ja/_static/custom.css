@@ -1,0 +1,31 @@
+.wy-nav-content {
+  max-width: 1200px;
+}
+
+.rst-content img {
+  height: auto;
+  max-width: 100%;
+}
+
+.rst-content div[class^="highlight"] pre {
+  overflow-x: auto;
+}
+
+.rst-content table.docutils td,
+.rst-content table.docutils th,
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+  vertical-align: top;
+  white-space: normal;
+}
+
+.rst-content table.docutils code.literal,
+.rst-content table.docutils code.literal span.pre,
+.rst-content table.docutils a,
+.wy-table-responsive code.literal,
+.wy-table-responsive code.literal span.pre,
+.wy-table-responsive a {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
+}

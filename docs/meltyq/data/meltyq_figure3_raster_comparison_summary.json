@@ -1,0 +1,254 @@
+{
+  "claim_status": "public_demo_not_unpublished_best_fit",
+  "comparison_contract": "provisional_plot_coordinate_comparison_not_goodness_of_fit",
+  "component_curve_comparison": {
+    "aerosols": {
+      "individual_realignment_applied": false,
+      "model_plus_shared_shift_minus_raster": {
+        "maximum_absolute_ppm": 117.139860505657,
+        "mean_ppm": 112.7524801024113,
+        "median_absolute_ppm": 112.31373303568535,
+        "median_ppm": 112.31373303568535,
+        "number_of_samples": 2375,
+        "rms_ppm": 112.75701930891648
+      },
+      "model_scenario_column": "aerosols_depth_ppm",
+      "paper_visibility_contract": "visible_palette_pixels",
+      "shared_shift_ppm": 185.71616408341697,
+      "visible_samples_in_csv": 2443,
+      "visible_samples_within_model_coverage": 2375,
+      "wavelength_max_micron": 11.990724238,
+      "wavelength_min_micron": 0.704447391
+    },
+    "molecule_CH4": {
+      "individual_realignment_applied": false,
+      "model_plus_shared_shift_minus_raster": {
+        "maximum_absolute_ppm": 84.71474585592796,
+        "mean_ppm": 12.524175426065808,
+        "median_absolute_ppm": 15.801964983702419,
+        "median_ppm": 13.831991157041102,
+        "number_of_samples": 1488,
+        "rms_ppm": 21.446671538054552
+      },
+      "model_scenario_column": "molecule_CH4_depth_ppm",
+      "paper_visibility_contract": "visible_palette_pixels",
+      "shared_shift_ppm": 185.71616408341697,
+      "visible_samples_in_csv": 1488,
+      "visible_samples_within_model_coverage": 1488,
+      "wavelength_max_micron": 11.963673197,
+      "wavelength_min_micron": 0.856434522
+    },
+    "molecule_CO": {
+      "individual_realignment_applied": false,
+      "model_plus_shared_shift_minus_raster": {
+        "maximum_absolute_ppm": 85.70711380106059,
+        "mean_ppm": 38.33554349410847,
+        "median_absolute_ppm": 39.21556049030937,
+        "median_ppm": 39.21556049030937,
+        "number_of_samples": 130,
+        "rms_ppm": 41.61333114904878
+      },
+      "model_scenario_column": "molecule_CO_depth_ppm",
+      "paper_visibility_contract": "visible_palette_pixels",
+      "shared_shift_ppm": 185.71616408341697,
+      "visible_samples_in_csv": 130,
+      "visible_samples_within_model_coverage": 130,
+      "wavelength_max_micron": 5.140645681,
+      "wavelength_min_micron": 4.364196607
+    },
+    "molecule_CO2": {
+      "individual_realignment_applied": false,
+      "model_plus_shared_shift_minus_raster": {
+        "maximum_absolute_ppm": 101.89666568716575,
+        "mean_ppm": 18.69495200266892,
+        "median_absolute_ppm": 19.926110955746253,
+        "median_ppm": 19.773810367631086,
+        "number_of_samples": 194,
+        "rms_ppm": 27.12070533445145
+      },
+      "model_scenario_column": "molecule_CO2_depth_ppm",
+      "paper_visibility_contract": "visible_palette_pixels",
+      "shared_shift_ppm": 185.71616408341697,
+      "visible_samples_in_csv": 253,
+      "visible_samples_within_model_coverage": 194,
+      "wavelength_max_micron": 9.216660621,
+      "wavelength_min_micron": 2.652293579
+    },
+    "molecule_H2O": {
+      "individual_realignment_applied": false,
+      "model_plus_shared_shift_minus_raster": {
+        "maximum_absolute_ppm": 154.58417996042317,
+        "mean_ppm": 77.57492869813734,
+        "median_absolute_ppm": 76.7238999778458,
+        "median_ppm": 76.7238999778458,
+        "number_of_samples": 1992,
+        "rms_ppm": 79.64297351057978
+      },
+      "model_scenario_column": "molecule_H2O_depth_ppm",
+      "paper_visibility_contract": "visible_palette_pixels",
+      "shared_shift_ppm": 185.71616408341697,
+      "visible_samples_in_csv": 2057,
+      "visible_samples_within_model_coverage": 1992,
+      "wavelength_max_micron": 11.990724238,
+      "wavelength_min_micron": 0.713252614
+    },
+    "rayleigh_plus_cia": {
+      "individual_realignment_applied": false,
+      "model_plus_shared_shift_minus_raster": {
+        "maximum_absolute_ppm": 376.6493205589213,
+        "mean_ppm": -211.73744734441254,
+        "median_absolute_ppm": 258.29796325016514,
+        "median_ppm": -258.29796325016514,
+        "number_of_samples": 455,
+        "rms_ppm": 242.58849620851
+      },
+      "model_scenario_column": "rayleigh_plus_cia_depth_ppm",
+      "paper_visibility_contract": "visible_palette_pixels",
+      "shared_shift_ppm": 185.71616408341697,
+      "visible_samples_in_csv": 455,
+      "visible_samples_within_model_coverage": 455,
+      "wavelength_max_micron": 1.748438431,
+      "wavelength_min_micron": 0.719725463
+    }
+  },
+  "inputs": {
+    "archived_model": {
+      "path": "docs/meltyq/data/meltyq_figure3_public_ckd_model.csv",
+      "scenario_columns": [
+        "total_depth_ppm",
+        "aerosols_depth_ppm",
+        "rayleigh_plus_cia_depth_ppm",
+        "molecule_H2O_depth_ppm",
+        "molecule_CO_depth_ppm",
+        "molecule_CO2_depth_ppm",
+        "molecule_CH4_depth_ppm",
+        "molecule_NH3_depth_ppm"
+      ],
+      "sha256": "db6591a22dfb7f6ffe2369bda6e06a437544b72703438e85e3c2eea641d5cb7b",
+      "spectral_points": 2917
+    },
+    "builder": {
+      "path": "docs/meltyq/build_meltyq_figure3_raster_comparison.py",
+      "sha256": "5d939c92fe292f046154d3aea1c15b9b6f38b0c03b04d689106b391b7e4dea40"
+    },
+    "package_versions_from_forward_metadata": {
+      "exoeos": "0.1.1.dev29+gde99829ef",
+      "exogibbs": "0.5.1.dev35+g01b21d4a7.d20260821",
+      "exojax": "2.4.1.dev127+gcde2bda1f.d20260821",
+      "exopie": "2.1.0",
+      "jax": "0.4.30"
+    },
+    "public_config": {
+      "path": "examples/meltyq/configs/meltyq_figure3_public_demo.json",
+      "sha256": "eab77ec72c09e642d8191b3c72f06bf60d45751ea6b96ffd70d32e424b23c820"
+    },
+    "raster_reference": {
+      "path": "docs/meltyq/data/meltyq_figure3_raster_reference.csv",
+      "row_count": 10245,
+      "sha256": "f1ceff4374f9974fa72295666c08d004e21178dbd14ea1dd70b7cb8e4104bd4a"
+    },
+    "source_outputs": {
+      "metadata_json": {
+        "created_at_utc": "2026-08-25T23:37:15.591169+00:00",
+        "path": "docs/meltyq/data/meltyq_figure3_public_ckd_metadata.json",
+        "sha256": "cceb5852ba50ebe032ea180d9072d01f6b3c43158a01a72d692235dd9c7866ea"
+      },
+      "model_spectra_csv": {
+        "path": "docs/meltyq/data/meltyq_figure3_public_ckd_model.csv",
+        "sha256": "db6591a22dfb7f6ffe2369bda6e06a437544b72703438e85e3c2eea641d5cb7b"
+      }
+    }
+  },
+  "interpretation_limits": [
+    "The published curves are coordinates digitized from a raster image, not author numerical tables.",
+    "The public CKD demo uses rounded Figure 9 posterior medians and is not the unpublished Figure 3 best fit.",
+    "The shared vertical shift is a display-coordinate alignment, not a fitted physical parameter.",
+    "Descriptive differences are not likelihoods or goodness-of-fit statistics.",
+    "Published component summaries use only visible palette pixels and cannot recover curves clipped below the plot boundary."
+  ],
+  "outputs": {
+    "en_figure": {
+      "path": "docs/en/meltyq/meltyq_figure3_forward_comparison_en_files/meltyq_figure3_raster_comparison_en.png",
+      "sha256": "c40dfb61b6b61132f8ecf5f32b69b4707b2be672b659fe01e2dd96470078205d"
+    },
+    "ja_figure": {
+      "path": "docs/ja/meltyq/meltyq_figure3_forward_comparison_ja_files/meltyq_figure3_raster_comparison_ja.png",
+      "sha256": "8a7add9aa465532fdf03c56c752eb66622bfef11c9c71cba6ded073166aaaca3"
+    }
+  },
+  "paper": "https://doi.org/10.3847/1538-4357/ae6917",
+  "schema_version": "meltyq.figure3.raster_comparison@1",
+  "temperature_pressure_comparison": {
+    "deep_temperature_rule": "linear in log10 pressure between the 10-bar base and melt interface",
+    "difference_definition": "public_demo_temperature_minus_digitized_raster_temperature_k",
+    "public_deep_layers": 64,
+    "public_upper_layers": 100,
+    "public_upper_smoothing_window_layers": 11,
+    "published_digitized_samples": 840,
+    "published_raster_curve_id": "temperature_profile",
+    "regions": {
+      "deep": {
+        "ambiguous_algorithm": false,
+        "interpolation_coordinate": "log10_pressure_pa",
+        "pressure_max_pa": 6760829753.919819,
+        "pressure_min_pa": 1000000.0,
+        "public_demo_minus_digitized_raster": {
+          "maximum_absolute_k": 60.91995167767345,
+          "mean_k": -4.097203601452983,
+          "median_absolute_k": 26.76567149754385,
+          "median_k": -4.437194030559567,
+          "number_of_samples": 234,
+          "rms_k": 31.30228601599617
+        }
+      },
+      "upper": {
+        "ambiguous_algorithm": false,
+        "interpolation_coordinate": "log10_pressure_pa",
+        "pressure_max_pa": 1000000.0,
+        "pressure_min_pa": 0.0001,
+        "public_demo_minus_digitized_raster": {
+          "maximum_absolute_k": 87.19786755591463,
+          "mean_k": -71.3850800798299,
+          "median_absolute_k": 79.58870983261343,
+          "median_k": -79.58870983261343,
+          "number_of_samples": 605,
+          "rms_k": 72.79042129253486
+        }
+      }
+    }
+  },
+  "total_curve_comparison": {
+    "after_shared_shift_descriptive_difference": {
+      "maximum_absolute_ppm": 97.88978415270458,
+      "mean_ppm": 0.3135011382545373,
+      "median_absolute_ppm": 31.71223454836627,
+      "median_ppm": 0.0,
+      "number_of_samples": 977,
+      "rms_ppm": 39.005556520532565
+    },
+    "difference_definition": "public_ckd_demo_minus_digitized_raster_ppm",
+    "selection": {
+      "all_digitized_black_samples": 2579,
+      "ambiguous_algorithm": false,
+      "curve_id": "meltyq_best_fit_solid_black",
+      "median_estimated_digitization_uncertainty_ppm": 1.403509,
+      "possible_error_bar_overlap": false,
+      "selected_samples": 977,
+      "wavelength_max_micron": 8.0,
+      "wavelength_min_micron": 0.75
+    },
+    "shared_vertical_shift": {
+      "formula": "-median(public_ckd_demo_minus_digitized_raster)",
+      "individual_component_realignment_applied": false,
+      "shift_added_to_every_public_demo_scenario_ppm": 185.71616408341697
+    },
+    "unshifted_descriptive_difference": {
+      "maximum_absolute_ppm": 247.3894923438147,
+      "mean_ppm": -185.40266294516246,
+      "median_absolute_ppm": 185.71616408341697,
+      "median_ppm": -185.71616408341697,
+      "number_of_samples": 977,
+      "rms_ppm": 189.46103183417503
+    }
+  }
+}

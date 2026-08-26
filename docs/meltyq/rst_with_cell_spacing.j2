@@ -1,0 +1,15 @@
+{% extends 'rst/index.rst.j2' %}
+
+{% block any_cell scoped %}
+
+{{ super() }}
+
+{% endblock any_cell %}
+
+{% block markdowncell scoped %}
+{{ cell.source | convert_pandoc("markdown", "rst", ["--wrap=none"]) }}
+{% endblock markdowncell %}
+
+{% block data_markdown scoped %}
+{{ output.data['text/markdown'] | convert_pandoc("markdown", "rst", ["--wrap=none"]) }}
+{% endblock data_markdown %}

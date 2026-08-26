@@ -1,0 +1,443 @@
+{
+  "cia": {
+    "H2-H2": {
+      "coverage_by_scheme": {
+        "exojax_simpson": "set coefficients to zero outside native coverage",
+        "taurex_rectangle": "use constant edge values outside native coverage"
+      },
+      "implementation": "exojax.opacity.OpaCIA",
+      "path": ".database/H2-H2_2011.cia",
+      "sha256": "14f56ff889a474402136be721fcc286921a1b47ce5f7c3dff90af2d4c74b20e5",
+      "temperature_max_k": 3000.0,
+      "temperature_min_k": 200.0,
+      "wavenumber_interpolation": "interp",
+      "wavenumber_max_cm1": 10000.0,
+      "wavenumber_min_cm1": 824.0
+    },
+    "H2-He": {
+      "coverage_by_scheme": {
+        "exojax_simpson": "set coefficients to zero outside native coverage",
+        "taurex_rectangle": "use constant edge values outside native coverage"
+      },
+      "implementation": "exojax.opacity.OpaCIA",
+      "path": ".database/H2-He_2011.cia",
+      "sha256": "4f0eb9cd69a1c383f53a1431495bae0c01a30a41cc1b8433c2d726763ff45431",
+      "temperature_max_k": 9900.0,
+      "temperature_min_k": 200.0,
+      "wavenumber_interpolation": "interp",
+      "wavenumber_max_cm1": 15395.0,
+      "wavenumber_min_cm1": 824.0
+    }
+  },
+  "config": {
+    "claim_status": "public_demo_not_unpublished_best_fit",
+    "cloud": {
+      "enabled": true,
+      "top_pressure_pa": 933.254300796991
+    },
+    "haze": {
+      "enabled": true,
+      "log10_pressure_extent": 2.0,
+      "mid_pressure_pa": 154.8816618912481,
+      "particle_number_density_m3": 70807952896.05096,
+      "particle_radius_micron": 0.06309573444801933,
+      "q0": 52.02,
+      "vertical_profile": "exp_decay"
+    },
+    "magma": {
+      "co_melt_mole_ratio": 3.162277660168379e-08,
+      "input_basis": "paper_labelled_operational_mapping",
+      "n_melt_mole_ratio": 6.456542290346556e-07,
+      "oxygen_fugacity_bar": 7.943282347242822e-07,
+      "pressure_melt_bar": 67608.29753919819,
+      "temperature_base_k": 1108.56,
+      "temperature_melt_k": 3025.3
+    },
+    "name": "K2-18 b public Figure 9 posterior-median demo",
+    "observations": {
+      "anchor_offset_group": "niriss_reference",
+      "miri_reduction": "jexores",
+      "niriss_resolution": "lowres",
+      "offset_group_by_dataset": {
+        "miri_lrs": "miri_lrs",
+        "niriss_soss": "niriss_reference",
+        "nirspec_g235h_nrs1": "nirspec_g235h",
+        "nirspec_g235h_nrs2": "nirspec_g235h",
+        "nirspec_g395h_nrs1": "nirspec_g395h",
+        "nirspec_g395h_nrs2": "nirspec_g395h"
+      },
+      "offsets_ppm": {
+        "miri_lrs": 0.0,
+        "niriss_reference": 0.0,
+        "nirspec_g235h": 0.0,
+        "nirspec_g395h": 0.0
+      }
+    },
+    "planet": {
+      "mass_earth": 8.63,
+      "rocky_core_mass_fraction": 0.33,
+      "rocky_radius_rearth": null,
+      "stellar_radius_solar": 0.4445
+    },
+    "schema_version": "meltyq.figure3.config@1",
+    "source_notes": [
+      "Magma, temperature, cloud, and haze values are rounded visual readings of the one-dimensional posterior titles in published MELTYQ Figure 9.",
+      "They are posterior-median demonstration coordinates, not the maximum-likelihood vector used for the black curve in Figure 3.",
+      "The K2-18 b bulk values are editable public system values and are not documented as the exact fixed values used by MELTYQ.",
+      "All dataset offsets are initialized to zero because their exact units, ordering, grouping, and best-fit values require author confirmation.",
+      "The upper profile uses the TauREx NPoint default 10-percent smoothing window; the exact MELTYQ setting requires author confirmation.",
+      "The ExoExamples native forward path uses ExoJAX chord geometry and Simpson annulus integration; the TauREx legacy discretization remains an explicit MELTYQ compatibility option.",
+      "The Lee exp_decay profile follows the currently public TauREx-PyMieScatt formula pinned at commit 2973ace; the exact plugin revision and component grouping used for MELTYQ Figure 3 require author confirmation."
+    ],
+    "spectral": {
+      "opacity_mode": "ckd",
+      "radiative_transfer_scheme": "exojax_simpson",
+      "rayleigh_provider": "taurex",
+      "wavelength_max_micron": 12.0,
+      "wavelength_min_micron": 0.65
+    },
+    "upper": {
+      "nlayer": 100,
+      "pressure_base_bar": 10.0,
+      "pressure_top_bar": 1e-10,
+      "smoothing_window_percent": 10.0,
+      "temperature_100_pa_k": 271.66,
+      "temperature_1e4_pa_k": 824.16,
+      "temperature_1e_minus2_pa_k": 210.05
+    }
+  },
+  "created_at_utc": "2026-08-25T23:37:15.591169+00:00",
+  "deep_model": {
+    "base_iterations": 3,
+    "base_mole_fractions": {
+      "CH4": 0.0003068517248124596,
+      "CO": 4.103913061399622e-05,
+      "CO2": 9.931815897148377e-07,
+      "H2": 0.8223911403320189,
+      "H2O": 0.02062501413735115,
+      "He": 0.15661480231853434,
+      "N2": 1.2114914159645166e-05,
+      "NH3": 8.044260919709244e-06,
+      "O2": 1.6283436701487973e-22
+    },
+    "boundary_iterations": 4,
+    "profile_max_iterations": 3,
+    "provider_parameters": {
+      "co_melt_mole_ratio": 7.37473365324938e-08,
+      "n_melt_mole_ratio": 1.2913084580693112e-06,
+      "oxygen_fugacity_bar": 7.943282347242822e-07,
+      "pressure_melt_bar": 67608.29753919819,
+      "temperature_base_k": 1108.56,
+      "temperature_melt_k": 3025.3
+    },
+    "radius_at_10_bar_rearth": 2.3363496659860035,
+    "rocky_radius_rearth": 1.749079347495948
+  },
+  "documentation_archive": {
+    "model_spectra": {
+      "scenario_columns": [
+        "total_depth_ppm",
+        "aerosols_depth_ppm",
+        "rayleigh_plus_cia_depth_ppm",
+        "molecule_H2O_depth_ppm",
+        "molecule_CO_depth_ppm",
+        "molecule_CO2_depth_ppm",
+        "molecule_CH4_depth_ppm",
+        "molecule_NH3_depth_ppm"
+      ],
+      "sha256": "db6591a22dfb7f6ffe2369bda6e06a437544b72703438e85e3c2eea641d5cb7b",
+      "spectral_points": 2917
+    },
+    "schema_version": "meltyq.figure3.documentation-forward-metadata@1"
+  },
+  "effective_opacity_mode": "ckd",
+  "interpretation_limits": [
+    "The checked-in public demo is not the unpublished MELTYQ best fit.",
+    "Diagonal residual metrics do not include channel covariance.",
+    "Lee vertical-profile selection remains author-confirmation dependent.",
+    "At high pressure ExoGibbs uses the primary-source square-root pressure N-solubility form; the typeset MELTYQ Appendix shows linear pressure.",
+    "CKD mode is a fast R=1000 perfect-correlation approximation, not MELTYQ's R=50000 cross-section calculation."
+  ],
+  "memory_estimate": {
+    "archive_opacity_table_total_gib": 0.0,
+    "g_points": 16,
+    "major_rt_work_arrays_lower_bound_gib": 0.5911469459533691,
+    "peak_resident_opacity_table_gib": 0.0,
+    "retained_evaluated_molecular_cross_sections_gib": 0.17386674880981445,
+    "spectral_points": 2917,
+    "stage_peak_lower_bound_gib": 0.7650136947631836,
+    "warning": "Stage peak is max(one streamed table plus retained cross sections, retained cross sections plus major RT work arrays). It excludes CIA/Rayleigh arrays, XLA temporaries, and allocator overhead."
+  },
+  "observation_binning": "exojax.postproc.binning.band_mean_bin_operator: wavelength-overlap of piecewise-constant CKD band means",
+  "observations": [
+    {
+      "dataset_id": "niriss_soss",
+      "points": 30,
+      "provenance": ".database/meltyq_figure3_observations/K2-18b_niriss_soss_lowres.txt"
+    },
+    {
+      "dataset_id": "nirspec_g235h_nrs1",
+      "points": 130,
+      "provenance": ".database/meltyq_figure3_observations/spectra-k2-18b.zip:spectra/nirspec_combined/K2_G235H_NRS1_ave2_shifted.dat"
+    },
+    {
+      "dataset_id": "nirspec_g235h_nrs2",
+      "points": 200,
+      "provenance": ".database/meltyq_figure3_observations/spectra-k2-18b.zip:spectra/nirspec_combined/K2_G235H_NRS2_ave2_shifted.dat"
+    },
+    {
+      "dataset_id": "nirspec_g395h_nrs1",
+      "points": 210,
+      "provenance": ".database/meltyq_figure3_observations/spectra-k2-18b.zip:spectra/nirspec_combined/K2_G395H_NRS1_ave3_shifted.dat"
+    },
+    {
+      "dataset_id": "nirspec_g395h_nrs2",
+      "points": 335,
+      "provenance": ".database/meltyq_figure3_observations/spectra-k2-18b.zip:spectra/nirspec_combined/K2_G395H_NRS2_ave3_shifted.dat"
+    },
+    {
+      "dataset_id": "miri_lrs",
+      "points": 29,
+      "provenance": ".database/meltyq_figure3_observations/K2-18b_miri_lrs_jexores.txt"
+    }
+  ],
+  "offsets_ppm": {
+    "miri_lrs": 0.0,
+    "niriss_reference": 0.0,
+    "nirspec_g235h": 0.0,
+    "nirspec_g395h": 0.0
+  },
+  "offsets_profiled_analytically": false,
+  "opacities": {
+    "bounds_policy": "Temperature must be inside every table; pressure outside a table is endpoint-clamped by OpaCKD and reported in metadata.",
+    "files": {
+      "CH4": {
+        "identity": {
+          "archive_mol_name": "CH4",
+          "basename": "12C-1H4__YT34to10.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+          "isotopologue": "12C-1H4",
+          "line_list": "YT34to10",
+          "molecular_mass": 16.0,
+          "molecule": "CH4"
+        },
+        "path": ".database/CH4/12C-1H4/YT34to10/12C-1H4__YT34to10.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+        "sha256": "5bfcfd23b94cb961f8ffd609a6c06f0508c6a1940e001787426da2914ec246d6"
+      },
+      "CO": {
+        "identity": {
+          "archive_mol_name": "CO",
+          "basename": "12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+          "isotopologue": "12C-16O",
+          "line_list": "Li2015",
+          "molecular_mass": 28.0,
+          "molecule": "CO"
+        },
+        "path": ".database/CO/12C-16O/Li2015/12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+        "sha256": "02e2ce9366e65617f06abc53733a2f71991ef5397f004d2582d9299afaf58172"
+      },
+      "CO2": {
+        "identity": {
+          "archive_mol_name": "CO2",
+          "basename": "12C-16O2__UCL-4000.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+          "isotopologue": "12C-16O2",
+          "line_list": "UCL-4000",
+          "molecular_mass": 44.0,
+          "molecule": "CO2"
+        },
+        "path": ".database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+        "sha256": "88f93904d3fd1fd4af4f6e5848371a850d212196f3ac0f550e06553f5970786d"
+      },
+      "H2O": {
+        "identity": {
+          "archive_mol_name": null,
+          "basename": "1H2-16O__POKAZATEL__R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+          "isotopologue": "1H2-16O",
+          "line_list": "POKAZATEL",
+          "molecular_mass": 18.0,
+          "molecule": "H2O"
+        },
+        "path": ".database/H2O/1H2-16O/POKAZATEL/1H2-16O__POKAZATEL__R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+        "sha256": "adf7aef2769ce4c652130d682e36d302e789df78da6ac96c2f55a5c204e47757"
+      },
+      "NH3": {
+        "identity": {
+          "archive_mol_name": "NH3",
+          "basename": "14N-1H3__CoYuTe.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+          "isotopologue": "14N-1H3",
+          "line_list": "CoYuTe",
+          "molecular_mass": 17.0,
+          "molecule": "NH3"
+        },
+        "path": ".database/NH3/14N-1H3/CoYuTe/14N-1H3__CoYuTe.R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+        "sha256": "cdaeab48044591694077f38e968660e2f3dadb138b0b0f793943fb10864fe418"
+      }
+    },
+    "line_lists": {
+      "CH4": "YT34to10",
+      "CO": "Li2015",
+      "CO2": "UCL-4000",
+      "H2O": "POKAZATEL",
+      "NH3": "CoYuTe (fast-path substitution for paper BYTe)"
+    },
+    "mixture_convention": "matching-g perfect correlation",
+    "nominal_resolving_power": 1000,
+    "provider": "ExoMolOP"
+  },
+  "opacity_interpolation_bounds": {
+    "CH4": {
+      "layers_pressure_endpoint_clamped_above": 0,
+      "layers_pressure_endpoint_clamped_below": 45,
+      "pressure_range_bar": [
+        1e-05,
+        100.0
+      ],
+      "temperature_range_k": [
+        100.0,
+        3400.0
+      ]
+    },
+    "CO": {
+      "layers_pressure_endpoint_clamped_above": 0,
+      "layers_pressure_endpoint_clamped_below": 45,
+      "pressure_range_bar": [
+        1e-05,
+        100.0
+      ],
+      "temperature_range_k": [
+        100.0,
+        3400.0
+      ]
+    },
+    "CO2": {
+      "layers_pressure_endpoint_clamped_above": 0,
+      "layers_pressure_endpoint_clamped_below": 45,
+      "pressure_range_bar": [
+        1e-05,
+        100.0
+      ],
+      "temperature_range_k": [
+        100.0,
+        3400.0
+      ]
+    },
+    "H2O": {
+      "layers_pressure_endpoint_clamped_above": 0,
+      "layers_pressure_endpoint_clamped_below": 45,
+      "pressure_range_bar": [
+        1e-05,
+        100.0
+      ],
+      "temperature_range_k": [
+        100.0,
+        3400.0
+      ]
+    },
+    "NH3": {
+      "layers_pressure_endpoint_clamped_above": 0,
+      "layers_pressure_endpoint_clamped_below": 45,
+      "pressure_range_bar": [
+        1e-05,
+        100.0
+      ],
+      "temperature_range_k": [
+        100.0,
+        3400.0
+      ]
+    }
+  },
+  "outputs": {
+    "binned_comparison_csv": {
+      "filename": "binned_comparison.csv",
+      "sha256": "74de6cce5d9a9d8fede9c1433a881407e82196af328604f4d53532b6a3c9e5d7"
+    },
+    "forward_figure_png": {
+      "filename": "figure3_forward_comparison.png",
+      "sha256": "9d5da8357f03ec73aabe1f51520632e6a78ef01a80ddca20c6beda8ad37dc833"
+    },
+    "model_spectra_csv": {
+      "filename": "model_spectra.csv",
+      "sha256": "db6591a22dfb7f6ffe2369bda6e06a437544b72703438e85e3c2eea641d5cb7b"
+    }
+  },
+  "package_source_states": {
+    "exoeos": {
+      "python_source_files": 15,
+      "python_source_inventory_sha256": "6dff4e15a58b698e38adfdd6e8f88364de65d09a07b65002439158f0cdc75c2e"
+    },
+    "exogibbs": {
+      "python_source_files": 132,
+      "python_source_inventory_sha256": "8f925d8748f8d6683ca84221b3424611cb9dbddd043d5fc8acfac15aca6de10d"
+    },
+    "exojax": {
+      "python_source_files": 198,
+      "python_source_inventory_sha256": "32efad504b879d32563cac063177a01622331b24574b8dc7358c2e79b66f9f5f"
+    },
+    "exopie": {
+      "data_files": 4,
+      "data_inventory_sha256": "c79858b08a57f63511aa9383ac9b385aa4e0e99b06d05662677cc92c7d24d53a",
+      "python_source_files": 6,
+      "python_source_inventory_sha256": "d695c7902c57686fd409d61d480a780d96146278973a352eb15dff2fb8265f05"
+    }
+  },
+  "package_versions": {
+    "exoeos": "0.1.1.dev29+gde99829ef",
+    "exogibbs": "0.5.1.dev35+g01b21d4a7.d20260821",
+    "exojax": "2.4.1.dev127+gcde2bda1f.d20260821",
+    "exopie": "2.1.0",
+    "jax": "0.4.30"
+  },
+  "paper": "https://doi.org/10.3847/1538-4357/ae6917",
+  "reference_spectrum": null,
+  "reference_summary": null,
+  "residual_summary": {
+    "chi_squared_diagonal_only": 9292.405039333062,
+    "gaussian_log_likelihood_ppm_units": -9418.824885657981,
+    "number_of_points": 934,
+    "reduced_chi_squared_no_parameter_correction": 9.949041798001137,
+    "residual_median_absolute_ppm": 161.66225216449766,
+    "residual_rms_ppm": 177.51208554594288
+  },
+  "schema_version": "meltyq.figure3.run-metadata@1",
+  "timing": {
+    "compilation_strategy": "one stacked vmap kernel for all scenarios",
+    "compiled_scenario_count": 8,
+    "context_build_seconds": 0.3526309374719858,
+    "deep_first_solve_seconds_including_any_compilation": 14.8330098092556,
+    "first_call_seconds_including_any_compilation": 0.9835834633558989,
+    "opacity_preparation_seconds_including_any_compilation": 3.512966252863407,
+    "opacity_table_capture_policy": "temperature-evaluated cross sections are dynamic RT arguments; large opacity tables are not RT-kernel closure constants",
+    "repeat_call_seconds": [
+      0.4094613902270794
+    ],
+    "repeat_median_seconds": 0.4094613902270794
+  },
+  "upper_model": {
+    "haze": {
+      "enabled": true,
+      "historical_formula_change": "https://github.com/groningen-exoatmospheres/taurex-pymiescatt/commit/2973acec3985c2222281062be16a07428c43d621",
+      "meltyq_runtime_revision_confirmed": false,
+      "public_formula_source": "https://github.com/groningen-exoatmospheres/taurex-pymiescatt/blob/2973acec3985c2222281062be16a07428c43d621/taurex_pymiescatt/contributions/pyleemie.py",
+      "vertical_profile": "exp_decay"
+    },
+    "mean_molecular_weight": 2.6628662316322362,
+    "opaque_cloud_vertical_dtau_used_by_rt": 1e+20,
+    "radiative_transfer": {
+      "exojax_implementations": {
+        "cia_interpolation": "exojax.opacity.OpaCIA[interp]",
+        "geometric_haze_layer_optical_depth": "exojax.rt.layeropacity.layer_optical_depth_from_extinction",
+        "pressure_coordinate_radiative_transfer": "exojax.rt.ArtTransPure"
+      },
+      "gravity_constant_cgs": 6.67408e-08,
+      "scheme": "exojax_simpson",
+      "taurex_discretization": null,
+      "taurex_sources": null
+    },
+    "rayleigh": {
+      "input_cross_section_unit": "cm2 molecule-1",
+      "provider": "taurex",
+      "taurex_source": "https://github.com/ucl-exoplanets/taurex3/blob/7b6e82a86d4675f140e9e59f3d1410a863251c03/src/taurex/util/scattering.py"
+    },
+    "temperature_max_k": 1100.739,
+    "temperature_min_k": 210.05
+  }
+}
