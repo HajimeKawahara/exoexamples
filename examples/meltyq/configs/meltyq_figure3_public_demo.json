@@ -1,0 +1,77 @@
+{
+  "schema_version": "meltyq.figure3.config@1",
+  "name": "K2-18 b public Figure 9 posterior-median demo",
+  "claim_status": "public_demo_not_unpublished_best_fit",
+  "source_notes": [
+    "Magma, temperature, cloud, and haze values are rounded visual readings of the one-dimensional posterior titles in published MELTYQ Figure 9.",
+    "They are posterior-median demonstration coordinates, not the maximum-likelihood vector used for the black curve in Figure 3.",
+    "The K2-18 b bulk values are editable public system values and are not documented as the exact fixed values used by MELTYQ.",
+    "All dataset offsets are initialized to zero because their exact units, ordering, grouping, and best-fit values require author confirmation.",
+    "The upper profile uses the TauREx NPoint default 10-percent smoothing window; the exact MELTYQ setting requires author confirmation.",
+    "The ExoExamples native forward path uses ExoJAX chord geometry and Simpson annulus integration; the TauREx legacy discretization remains an explicit MELTYQ compatibility option.",
+    "The Lee exp_decay profile follows the currently public TauREx-PyMieScatt formula pinned at commit 2973ace; the exact plugin revision and component grouping used for MELTYQ Figure 3 require author confirmation."
+  ],
+  "planet": {
+    "mass_earth": 8.63,
+    "stellar_radius_solar": 0.4445,
+    "rocky_core_mass_fraction": 0.33,
+    "rocky_radius_rearth": null
+  },
+  "magma": {
+    "pressure_melt_bar": 67608.29753919819,
+    "temperature_melt_k": 3025.3,
+    "oxygen_fugacity_bar": 7.943282347242822e-07,
+    "co_melt_mole_ratio": 3.162277660168379e-08,
+    "n_melt_mole_ratio": 6.456542290346556e-07,
+    "temperature_base_k": 1108.56,
+    "input_basis": "paper_labelled_operational_mapping"
+  },
+  "upper": {
+    "pressure_top_bar": 1e-10,
+    "pressure_base_bar": 10.0,
+    "nlayer": 100,
+    "temperature_1e4_pa_k": 824.16,
+    "temperature_100_pa_k": 271.66,
+    "temperature_1e_minus2_pa_k": 210.05,
+    "smoothing_window_percent": 10.0
+  },
+  "cloud": {
+    "enabled": true,
+    "top_pressure_pa": 933.254300796991
+  },
+  "haze": {
+    "enabled": true,
+    "particle_radius_micron": 0.06309573444801933,
+    "q0": 52.02,
+    "particle_number_density_m3": 70807952896.05096,
+    "mid_pressure_pa": 154.8816618912481,
+    "log10_pressure_extent": 2.0,
+    "vertical_profile": "exp_decay"
+  },
+  "observations": {
+    "niriss_resolution": "lowres",
+    "miri_reduction": "jexores",
+    "offset_group_by_dataset": {
+      "niriss_soss": "niriss_reference",
+      "nirspec_g235h_nrs1": "nirspec_g235h",
+      "nirspec_g235h_nrs2": "nirspec_g235h",
+      "nirspec_g395h_nrs1": "nirspec_g395h",
+      "nirspec_g395h_nrs2": "nirspec_g395h",
+      "miri_lrs": "miri_lrs"
+    },
+    "offsets_ppm": {
+      "niriss_reference": 0.0,
+      "nirspec_g235h": 0.0,
+      "nirspec_g395h": 0.0,
+      "miri_lrs": 0.0
+    },
+    "anchor_offset_group": "niriss_reference"
+  },
+  "spectral": {
+    "opacity_mode": "ckd",
+    "wavelength_min_micron": 0.65,
+    "wavelength_max_micron": 12.0,
+    "radiative_transfer_scheme": "exojax_simpson",
+    "rayleigh_provider": "taurex"
+  }
+}

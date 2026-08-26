@@ -1,0 +1,161 @@
+{
+  "schema_version": "meltyq.figure3.diffgrid-manifest@1",
+  "minimum_resolving_power": 50000,
+  "build_contract": {
+    "schema_version": "meltyq.figure3.diffgrid-build-contract@1",
+    "spectral_grid": {
+      "kind": "ESLOG",
+      "unit": "cm-1",
+      "wavelength_order": "ascending",
+      "points": 145788,
+      "wavenumber_min_cm1": 833.3333333333336,
+      "wavenumber_max_cm1": 15384.615384615381,
+      "minimum_pointwise_resolving_power": 50000.36487289919,
+      "float64_little_endian_sha256": "d103e6bae3842c3a467f0c1529753cd8179cd3963b810633a4bb3fa2afd2a18b"
+    },
+    "pressure_grid": {
+      "unit": "bar",
+      "layers": 100,
+      "top_boundary_bar": 1e-10,
+      "bottom_boundary_bar": 10.0,
+      "float64_little_endian_sha256": "fa67f628c38285e034e86ffe2a479b2f8148201b7dff0b2837ace96ac47b5d0f"
+    },
+    "temperature_grid": {
+      "unit": "K",
+      "nodes": 21,
+      "minimum_k": 200.0,
+      "maximum_k": 1200.0,
+      "uniform_in_inverse_temperature": true,
+      "float64_little_endian_sha256": "984d11bc26f2f38e03341e6c1c43eb1f90b86634daa434f0e792a91557664748"
+    },
+    "teacher": {
+      "method": "premodit",
+      "complete_transition_files": true,
+      "line_strength_cutoff": 0.0,
+      "typical_temperature_k": 1000.0,
+      "requested_background_broadener": "H2",
+      "missing_requested_broadener_policy": "reject",
+      "diffmode": 1,
+      "broadening_resolution": 0.2,
+      "nstitch": 1,
+      "cutwing": 1.0,
+      "cutwing_effective": false,
+      "minimum_cross_section_cm2": 1e-35,
+      "validation_temperature_rule": "every inverse-temperature interval midpoint",
+      "validation_profile_count": 20,
+      "maximum_p99_absolute_log_cross_section_error": 0.05,
+      "maximum_absolute_log_cross_section_error": 0.5
+    },
+    "software": {
+      "builder_source_sha256": "2dbcfcccc8304b83fdf77d7ab84c2c4fca05145736414f92124ace1979519950",
+      "versions": {
+        "exojax": "2.4.1.dev127+gcde2bda1f.d20260821",
+        "jax": "0.4.30",
+        "jaxlib": "0.4.30",
+        "radis": "0.16.3"
+      },
+      "exojax_source": {
+        "git_revision": "4e8fd8f1b2747a0a075f24afa028ba2b3f2bfc50",
+        "git_source_dirty": true,
+        "git_status_sha256": "5a1f1e43aada45b9a6be5d9c1499a8e6a499afc2a8b9746c37524f87fd09142b",
+        "python_source_files": 198,
+        "python_source_inventory_sha256": "edc7aa91e9f897f1d7b208f0ac5dd15694597b1fe1636437d35486b2516eeef8"
+      }
+    }
+  },
+  "notes": [
+    "Each path points to an ExoJAX OpaDiffgrid NPZ archive built on the exact 100-layer pressure grid used by meltyq_figure3.py.",
+    "The companion ExoJAX metadata file remains beside an NPZ archive and is independently hash-pinned.",
+    "The builder records the descriptor fields inside archive user_meta; the loader verifies both copies.",
+    "A builder-generated manifest additionally locks a common spectral, pressure, temperature, and teacher contract before each species build starts.",
+    "Replace this template build_contract with the exact builder-generated contract when software or grid settings differ.",
+    "Replace all placeholder paths and SHA-256 values before selecting opacity_mode=diffgrid."
+  ],
+  "files": {
+    "H2O": {
+      "path": "../../../.database/meltyq_figure3_diffgrid/H2O.npz",
+      "sha256": "REPLACE_WITH_SHA256",
+      "metadata_sha256": "REPLACE_WITH_METADATA_SHA256",
+      "molecule": "H2O",
+      "isotopologue": "1H2-16O",
+      "line_list": "POKAZATEL",
+      "teacher_method": "premodit",
+      "source_grid_minimum_resolving_power": 50000.36487289919,
+      "source_database_inventory_sha256": "REPLACE_WITH_SOURCE_INVENTORY_SHA256",
+      "broadening_provenance": "REPLACE_WITH_BUILDER_GENERATED_OBJECT",
+      "interpolation_validation": {
+        "status": "passed",
+        "maximum_p99_log_error": 0.05,
+        "maximum_log_error": 0.5
+      }
+    },
+    "CO": {
+      "path": "../../../.database/meltyq_figure3_diffgrid/CO.npz",
+      "sha256": "REPLACE_WITH_SHA256",
+      "metadata_sha256": "REPLACE_WITH_METADATA_SHA256",
+      "molecule": "CO",
+      "isotopologue": "12C-16O",
+      "line_list": "Li2015",
+      "teacher_method": "premodit",
+      "source_grid_minimum_resolving_power": 50000.36487289919,
+      "source_database_inventory_sha256": "REPLACE_WITH_SOURCE_INVENTORY_SHA256",
+      "broadening_provenance": "REPLACE_WITH_BUILDER_GENERATED_OBJECT",
+      "interpolation_validation": {
+        "status": "passed",
+        "maximum_p99_log_error": 0.05,
+        "maximum_log_error": 0.5
+      }
+    },
+    "CO2": {
+      "path": "../../../.database/meltyq_figure3_diffgrid/CO2.npz",
+      "sha256": "REPLACE_WITH_SHA256",
+      "metadata_sha256": "REPLACE_WITH_METADATA_SHA256",
+      "molecule": "CO2",
+      "isotopologue": "12C-16O2",
+      "line_list": "UCL-4000",
+      "teacher_method": "premodit",
+      "source_grid_minimum_resolving_power": 50000.36487289919,
+      "source_database_inventory_sha256": "REPLACE_WITH_SOURCE_INVENTORY_SHA256",
+      "broadening_provenance": "REPLACE_WITH_BUILDER_GENERATED_OBJECT",
+      "interpolation_validation": {
+        "status": "passed",
+        "maximum_p99_log_error": 0.05,
+        "maximum_log_error": 0.5
+      }
+    },
+    "CH4": {
+      "path": "../../../.database/meltyq_figure3_diffgrid/CH4.npz",
+      "sha256": "REPLACE_WITH_SHA256",
+      "metadata_sha256": "REPLACE_WITH_METADATA_SHA256",
+      "molecule": "CH4",
+      "isotopologue": "12C-1H4",
+      "line_list": "YT34to10",
+      "teacher_method": "premodit",
+      "source_grid_minimum_resolving_power": 50000.36487289919,
+      "source_database_inventory_sha256": "REPLACE_WITH_SOURCE_INVENTORY_SHA256",
+      "broadening_provenance": "REPLACE_WITH_BUILDER_GENERATED_OBJECT",
+      "interpolation_validation": {
+        "status": "passed",
+        "maximum_p99_log_error": 0.05,
+        "maximum_log_error": 0.5
+      }
+    },
+    "NH3": {
+      "path": "../../../.database/meltyq_figure3_diffgrid/NH3.npz",
+      "sha256": "REPLACE_WITH_SHA256",
+      "metadata_sha256": "REPLACE_WITH_METADATA_SHA256",
+      "molecule": "NH3",
+      "isotopologue": "14N-1H3",
+      "line_list": "BYTe",
+      "teacher_method": "premodit",
+      "source_grid_minimum_resolving_power": 50000.36487289919,
+      "source_database_inventory_sha256": "REPLACE_WITH_SOURCE_INVENTORY_SHA256",
+      "broadening_provenance": "REPLACE_WITH_BUILDER_GENERATED_OBJECT",
+      "interpolation_validation": {
+        "status": "passed",
+        "maximum_p99_log_error": 0.05,
+        "maximum_log_error": 0.5
+      }
+    }
+  }
+}

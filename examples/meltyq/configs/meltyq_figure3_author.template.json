@@ -1,0 +1,75 @@
+{
+  "schema_version": "meltyq.figure3.config@1",
+  "name": "MELTYQ Figure 3 author maximum-likelihood vector",
+  "claim_status": "author_supplied_unverified_until_checksums_are_recorded",
+  "source_notes": [
+    "Replace every null with the exact value used for the solid black MELTYQ Figure 3 curve.",
+    "State whether CO_MELT and N_MELT use the paper-labelled or ExoGibbs elemental basis.",
+    "Record the exact public data reductions, offset grouping, signs, units, and fixed bulk quantities.",
+    "This paper-compatibility template retains the TauREx legacy discretization; use exojax_simpson for the ExoExamples native forward path.",
+    "Record the exact TauREx-PyMieScatt commit, Lee vertical relation, and whether the plotted Aerosols component includes Lee haze."
+  ],
+  "planet": {
+    "mass_earth": null,
+    "stellar_radius_solar": null,
+    "rocky_core_mass_fraction": 0.33,
+    "rocky_radius_rearth": null
+  },
+  "magma": {
+    "pressure_melt_bar": null,
+    "temperature_melt_k": null,
+    "oxygen_fugacity_bar": null,
+    "co_melt_mole_ratio": null,
+    "n_melt_mole_ratio": null,
+    "temperature_base_k": null,
+    "input_basis": "paper_labelled_operational_mapping"
+  },
+  "upper": {
+    "pressure_top_bar": 1e-10,
+    "pressure_base_bar": 10.0,
+    "nlayer": 100,
+    "temperature_1e4_pa_k": null,
+    "temperature_100_pa_k": null,
+    "temperature_1e_minus2_pa_k": null,
+    "smoothing_window_percent": null
+  },
+  "cloud": {
+    "enabled": true,
+    "top_pressure_pa": null
+  },
+  "haze": {
+    "enabled": true,
+    "particle_radius_micron": null,
+    "q0": null,
+    "particle_number_density_m3": null,
+    "mid_pressure_pa": null,
+    "log10_pressure_extent": 2.0,
+    "vertical_profile": "exp_decay"
+  },
+  "observations": {
+    "niriss_resolution": "lowres",
+    "miri_reduction": "jexores",
+    "offset_group_by_dataset": {
+      "niriss_soss": "niriss_reference",
+      "nirspec_g235h_nrs1": "nirspec_g235h",
+      "nirspec_g235h_nrs2": "nirspec_g235h",
+      "nirspec_g395h_nrs1": "nirspec_g395h",
+      "nirspec_g395h_nrs2": "nirspec_g395h",
+      "miri_lrs": "miri_lrs"
+    },
+    "offsets_ppm": {
+      "niriss_reference": 0.0,
+      "nirspec_g235h": null,
+      "nirspec_g395h": null,
+      "miri_lrs": null
+    },
+    "anchor_offset_group": null
+  },
+  "spectral": {
+    "opacity_mode": "diffgrid",
+    "wavelength_min_micron": 0.65,
+    "wavelength_max_micron": 12.0,
+    "radiative_transfer_scheme": "taurex_rectangle",
+    "rayleigh_provider": "taurex"
+  }
+}
