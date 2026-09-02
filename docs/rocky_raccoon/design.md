@@ -16,9 +16,9 @@ The current objective is a Rocky Raccoon-like calculation using ExoFamily
 providers, not recovery of the unpublished numerical solutions behind Figures
 1, 2, or 5. The first milestone covers the deep atmospheric column above a
 prescribed basal element composition. A paper-facing postprocessor now renders
-completed model columns on the Figure 2/5 axes and compares their temperature
-profiles and published scalar targets. This is an explicit diagnostic
-comparison, not a change to the reproduction claim.
+completed model columns on the Figure 2/5 axes and compares their molecular gas
+and temperature profiles and published scalar targets. This is an explicit
+diagnostic comparison, not a change to the reproduction claim.
 
 No new ExoStructure package is introduced. The coupler belongs in ExoExamples
 until self-gravity, `dm/dr`, entropy/time evolution, or core EOS machinery is
@@ -101,7 +101,7 @@ pressure-step-774 support-release, step-999 optimizer-directed-release, and
 step-1082 inventory-bridge states are also hard passing regressions. Eight
 additional warm-parent regressions cover steps 1075, 1076, 1077, 1084, 1186,
 1342, 1372, and 1383. Without the opt-in environment variable, the complete
-Rocky Raccoon test directory currently reports 53 passed and 21 skipped.
+Rocky Raccoon test directory currently reports 87 passed and 21 skipped.
 
 The authoritative run accepted 1,903 layers, all converged: one base, 1,879
 convective, and 23 non-convective. It used 1,462 lifecycle and 441 gas-only
@@ -163,15 +163,24 @@ The postprocessor writes `paper_comparison.png` and
 `paper_comparison.json`. Its plotted quantities have deliberately different
 reference contracts:
 
-- Gas mixing ratios and condensate number densities are ExoExamples outputs
-  only. Gas fractions are normalized over the explicit solver species. The
-  paper includes neutral atomic curves, including H, that are absent from this
-  explicit ExoGibbs network. The PDF also does not give a reliable
-  machine-readable species binding for every fragmented gas and condensate
-  path, so no published composition overlay or residual is claimed.
+- Solid gas curves are ExoExamples outputs, while dashed curves are visible
+  published vector segments. Species identity is bound by the exact RGB shared
+  by each legend label and curve together with panel geometry. The absolute
+  overlay is diagnostic: model fractions are normalized over the explicit
+  solver gases, whereas the paper's total includes neutral atomic gases.
+  Atomic H is consequently paper-only.
+- For each shared molecule other than H2, the primary quantitative gas metric
+  is `log10[(x_i/x_H2)_model] - log10[(x_i/x_H2)_paper]`. The H2 ratio cancels
+  the total-gas denominator. The model numerator must also remain at or above
+  the paper's `1e-18` plotting floor. Published floor contacts, model values
+  below the comparison floor, and gaps between visible fragments are censored
+  rather than zero; interpolation never bridges those gaps. Paper-visible and
+  jointly visible coverage are both recorded.
 - Condensate amounts are converted to number density through an
   ExoExamples-owned amount-gauge reconstruction. Its full element closure is
-  audited and stored in the comparison JSON.
+  audited and stored in the comparison JSON. Condensate curves remain
+  model-only because the PDF does not provide an equally complete, unique
+  species binding for its fragmented condensate paths.
 - Dashed temperature curves are coordinates extracted from the paper PDF's
   vector artwork. The checked-in
   `docs/rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.csv` and
@@ -188,8 +197,9 @@ The fixed-boundary calculation prescribes `pressure_base_bar` and
 envelope mass fraction `f = 0.03` and equilibrium temperature
 `Teq = 1000 K`. Its absolute elemental abundances and numerical opacity and
 conductivity tables are also unavailable. Therefore profile and radius
-differences describe the mismatch of the complete present closure; they are
-not paper-reproduction errors or isolated chemistry errors.
+differences, including the H2-relative molecular residuals, describe the
+mismatch of the complete present closure; they are not paper-reproduction
+errors or isolated chemistry errors.
 
 The current execution boundary is explicit:
 

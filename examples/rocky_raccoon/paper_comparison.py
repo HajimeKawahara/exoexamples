@@ -56,7 +56,7 @@ else:
     from examples.rocky_raccoon.raccoon_like_forward import CLAIM_STATUS
 
 
-COMPARISON_SCHEMA = "rocky_raccoon.paper_comparison@1"
+COMPARISON_SCHEMA = "rocky_raccoon.paper_comparison@2"
 COMPARISON_CLAIM_STATUS = (
     "fixed_boundary_vs_published_vector_tp_and_scalar_targets_not_reproduction"
 )
@@ -71,7 +71,48 @@ DEFAULT_TEMPERATURE_REFERENCE = (
     REPOSITORY_ROOT
     / "docs/rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.csv"
 )
+DEFAULT_GAS_REFERENCE = (
+    REPOSITORY_ROOT
+    / "docs/rocky_raccoon/data/rocky_raccoon_gas_vector_reference.csv"
+)
 TEMPERATURE_COMPARISON_GRID_SIZE = 512
+GAS_COMPARISON_GRID_SIZE = 512
+GAS_MIXING_RATIO_PLOT_FLOOR = 1.0e-18
+
+# Species names and RGB values are audited against the colored legend text
+# and curve strokes in the vector PDF.  The CSV deliberately stores the paper
+# labels; this mapping is the single conversion to ExoGibbs species names.
+PUBLISHED_TO_MODEL_GAS = {
+    "CH3": "C1H3",
+    "C2H2": "C2H2",
+    "H2": "H2",
+    "SiH3": "H3Si1",
+    "CH4": "C1H4",
+    "C2H4": "C2H4",
+    "Mg(OH)2": "H2Mg1O2",
+    "SiH4": "H4Si1",
+    "CO": "C1O1",
+    "H": None,
+    "H2O": "H2O1",
+    "SiO": "O1Si1",
+    "CO2": "C1O2",
+}
+# Filled from the exact percentage RGB values embedded in the paper PDF.
+PUBLISHED_GAS_COLORS = {
+    "CH3": (0.86665344, 0.62744141, 0.86665344),
+    "C2H2": (0.85881042, 0.43920898, 0.57646179),
+    "H2": (0.66273499, 0.66273499, 0.66273499),
+    "SiH3": (1.0, 0.64704895, 0.0),
+    "CH4": (1.0, 0.41175842, 0.70587158),
+    "C2H4": (1.0, 0.75292969, 0.79606628),
+    "Mg(OH)2": (0.62744141, 0.32156372, 0.17646790),
+    "SiH4": (0.85488892, 0.64704895, 0.12548828),
+    "CO": (0.0, 0.50195312, 0.50195312),
+    "H": (0.82743835, 0.82743835, 0.82743835),
+    "H2O": (0.11764526, 0.56469727, 1.0),
+    "SiO": (0.80390930, 0.36077881, 0.36077881),
+    "CO2": (0.0, 0.0, 0.80390930),
+}
 
 # Species shown in the corresponding published panels.  Neutral atomic H is
 # absent from the explicit Appendix-A network used by this example and is
@@ -150,6 +191,19 @@ class PublishedTemperatureReference:
     reference_contract: str
     pressure_bar: np.ndarray
     temperature_k: np.ndarray
+    segment_index: np.ndarray
+    transport: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class PublishedGasReference:
+    """One visible gas curve measured from the published vector artwork."""
+
+    case_identifier: str
+    species: str
+    reference_contract: str
+    pressure_bar: np.ndarray
+    mixing_ratio: np.ndarray
     segment_index: np.ndarray
     transport: tuple[str, ...]
 
@@ -237,6 +291,141 @@ def load_temperature_references(
             segment_index=segments,
             transport=transport,
         )
+    return references
+
+
+def load_gas_references(
+    path: Path = DEFAULT_GAS_REFERENCE,
+) -> dict[str, dict[str, PublishedGasReference]]:
+    """Load validated published gas curves, keyed by case and paper species."""
+
+    source = Path(path)
+    try:
+        with source.open(encoding="utf-8", newline="") as stream:
+            reader = csv.DictReader(stream)
+            rows = list(reader)
+            columns = set(reader.fieldnames or ())
+    except OSError as error:
+        raise ValueError(f"Could not read gas reference {source}.") from error
+    if not rows:
+        raise ValueError(f"Gas reference {source} contains no rows.")
+    required = {
+        "reference_contract",
+        "case_id",
+        "quantity",
+        "species",
+        "segment_index",
+        "transport_regime",
+        "pressure_bar",
+        "mixing_ratio",
+    }
+    missing = required - columns
+    if missing:
+        raise ValueError(f"Gas reference is missing columns: {sorted(missing)!r}.")
+
+    references: dict[str, dict[str, PublishedGasReference]] = {}
+    case_ids = tuple(dict.fromkeys(row["case_id"] for row in rows))
+    for case_id in case_ids:
+        paper_case_by_identifier(case_id)
+        case_rows = [row for row in rows if row["case_id"] == case_id]
+        species_names = tuple(
+            dict.fromkeys(row["species"] for row in case_rows)
+        )
+        case_references: dict[str, PublishedGasReference] = {}
+        for species in species_names:
+            if species not in PUBLISHED_TO_MODEL_GAS:
+                raise ValueError(
+                    f"Case {case_id!r} has unknown published gas {species!r}."
+                )
+            species_rows = [
+                row for row in case_rows if row["species"] == species
+            ]
+            contracts = {
+                row["reference_contract"] for row in species_rows
+            }
+            if contracts != {"published_vector_plot_digitization"}:
+                raise ValueError(
+                    f"Case {case_id!r}, gas {species!r} has an unsupported "
+                    "reference contract."
+                )
+            if {
+                row["quantity"] for row in species_rows
+            } != {"gas_mixing_ratio"}:
+                raise ValueError(
+                    f"Case {case_id!r}, gas {species!r} is not a gas "
+                    "mixing-ratio reference."
+                )
+            try:
+                pressure = np.asarray(
+                    [float(row["pressure_bar"]) for row in species_rows],
+                    dtype=float,
+                )
+                mixing_ratio = np.asarray(
+                    [float(row["mixing_ratio"]) for row in species_rows],
+                    dtype=float,
+                )
+                segments = np.asarray(
+                    [int(row["segment_index"]) for row in species_rows],
+                    dtype=int,
+                )
+            except (TypeError, ValueError) as error:
+                raise ValueError(
+                    f"Case {case_id!r}, gas {species!r} contains invalid "
+                    "numerical reference data."
+                ) from error
+            transport = tuple(
+                row["transport_regime"] for row in species_rows
+            )
+            if (
+                np.any(~np.isfinite(pressure))
+                or np.any(~np.isfinite(mixing_ratio))
+                or np.any(pressure <= 0.0)
+                or np.any(mixing_ratio <= 0.0)
+            ):
+                raise ValueError(
+                    f"Case {case_id!r}, gas {species!r} has non-finite or "
+                    "non-positive coordinates."
+                )
+            if np.any(segments < 0):
+                raise ValueError(
+                    f"Case {case_id!r}, gas {species!r} has a negative "
+                    "segment index."
+                )
+            if not set(transport) <= {"convective", "non_convective"}:
+                raise ValueError(
+                    f"Case {case_id!r}, gas {species!r} has an unknown "
+                    "transport regime."
+                )
+            for segment in np.unique(segments):
+                selected = pressure[segments == segment]
+                selected_transport = {
+                    value
+                    for value, keep in zip(transport, segments == segment)
+                    if keep
+                }
+                if selected.size < 2 or not (
+                    np.all(np.diff(selected) > 0.0)
+                    or np.all(np.diff(selected) < 0.0)
+                ):
+                    raise ValueError(
+                        f"Case {case_id!r}, gas {species!r}, segment "
+                        f"{segment} is not monotone."
+                    )
+                if len(selected_transport) != 1:
+                    raise ValueError(
+                        f"Case {case_id!r}, gas {species!r}, segment "
+                        f"{segment} mixes transport regimes."
+                    )
+            case_references[species] = PublishedGasReference(
+                case_identifier=case_id,
+                species=species,
+                reference_contract=contracts.pop(),
+                pressure_bar=pressure,
+                mixing_ratio=mixing_ratio,
+                segment_index=segments,
+                transport=transport,
+            )
+        references[case_id] = case_references
     return references
 
 
@@ -824,9 +1013,408 @@ def _missing_temperature_comparison(case_identifier: str) -> dict[str, Any]:
     }
 
 
+def _log_curve_segments(
+    pressure_bar: np.ndarray,
+    values: np.ndarray,
+    segment_index: np.ndarray,
+) -> list[tuple[int, np.ndarray, np.ndarray]]:
+    """Return independently interpolable positive curves in log-log space."""
+
+    pressure = np.asarray(pressure_bar, dtype=float)
+    curve = np.asarray(values, dtype=float)
+    segments = np.asarray(segment_index, dtype=int)
+    result = []
+    for segment in np.unique(segments):
+        selected = segments == segment
+        log_pressure = np.log10(pressure[selected])
+        log_values = np.log10(curve[selected])
+        order = np.argsort(log_pressure)
+        result.append((int(segment), log_pressure[order], log_values[order]))
+    return result
+
+
+def _model_log_ratio_segments(
+    run: CompletedRun,
+    species_index: int,
+    anchor_index: int,
+) -> list[tuple[int, np.ndarray, np.ndarray]]:
+    """Split a model ratio at zeros so interpolation never crosses a gap."""
+
+    species = run.gas_mixing_ratio[:, species_index]
+    anchor = run.gas_mixing_ratio[:, anchor_index]
+    positive = (
+        np.isfinite(species)
+        & np.isfinite(anchor)
+        & (species >= GAS_MIXING_RATIO_PLOT_FLOOR)
+        & (anchor > 0.0)
+    )
+    starts = np.flatnonzero(positive & ~np.r_[False, positive[:-1]])
+    stops = np.flatnonzero(positive & ~np.r_[positive[1:], False]) + 1
+    result = []
+    for segment, (start, stop) in enumerate(zip(starts, stops)):
+        if stop - start < 2:
+            continue
+        log_pressure = np.log10(run.pressure_bar[start:stop])
+        log_ratio = np.log10(species[start:stop] / anchor[start:stop])
+        order = np.argsort(log_pressure)
+        result.append(
+            (segment, log_pressure[order], log_ratio[order])
+        )
+    return result
+
+
+def _merged_intervals(
+    intervals: Sequence[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    """Return the union of closed intervals in deterministic order."""
+
+    merged: list[list[float]] = []
+    for lower, upper in sorted(intervals):
+        if not merged or lower > merged[-1][1]:
+            merged.append([lower, upper])
+        else:
+            merged[-1][1] = max(merged[-1][1], upper)
+    return [(lower, upper) for lower, upper in merged]
+
+
+def _missing_gas_comparison(case_identifier: str) -> dict[str, Any]:
+    return {
+        "availability": "missing_for_case",
+        "case_identifier": case_identifier,
+        "reference_contract": None,
+        "raw_overlay_contract": None,
+        "h2_relative_dex_comparison": None,
+    }
+
+
+def compare_gas_profiles(
+    run: CompletedRun,
+    references: Mapping[str, PublishedGasReference],
+    *,
+    grid_size: int = GAS_COMPARISON_GRID_SIZE,
+) -> dict[str, Any]:
+    """Compare molecular abundances as H2-relative log10 ratios.
+
+    Each published vector segment is interpolated independently.  The metric
+    therefore never bridges a censored gap, and model numerator values below
+    the published plot floor are excluded rather than treated as detections.
+    """
+
+    if not isinstance(grid_size, (int, np.integer)) or grid_size < 2:
+        raise ValueError("grid_size must be an integer of at least two.")
+    curves = dict(references)
+    for species, reference in curves.items():
+        if species != reference.species:
+            raise ValueError("Gas reference mapping key and species differ.")
+        if run.case.identifier != reference.case_identifier:
+            raise ValueError("Run and gas reference case identifiers differ.")
+    reference_contracts = {
+        reference.reference_contract for reference in curves.values()
+    }
+    if not curves:
+        return _missing_gas_comparison(run.case.identifier)
+    if len(reference_contracts) != 1:
+        raise ValueError("Gas references mix reference contracts.")
+
+    raw_overlay = {
+        "interpretation": "diagnostic_only_not_like_for_like_normalization",
+        "paper_normalization": "paper_total_gas_including_neutral_atoms",
+        "model_normalization": "sum_over_explicit_solver_gas_species",
+        "warning": (
+            "Absolute mixing-ratio overlays retain different total-gas "
+            "denominators and must not be interpreted as chemistry-only "
+            "residuals."
+        ),
+    }
+    anchor_reference = curves.get("H2")
+    if anchor_reference is None:
+        return {
+            "availability": "missing_h2_anchor",
+            "case_identifier": run.case.identifier,
+            "reference_contract": reference_contracts.pop(),
+            "raw_overlay_contract": raw_overlay,
+            "paper_only_species": sorted(
+                species
+                for species in curves
+                if PUBLISHED_TO_MODEL_GAS[species] is None
+            ),
+            "h2_relative_dex_comparison": None,
+        }
+    gas_index = {name: index for index, name in enumerate(run.gas_species)}
+    anchor_model_name = PUBLISHED_TO_MODEL_GAS["H2"]
+    if anchor_model_name not in gas_index:
+        raise ValueError("The model run has no H2 reference species.")
+    anchor_model_index = gas_index[anchor_model_name]
+    anchor_segments = _log_curve_segments(
+        anchor_reference.pressure_bar,
+        anchor_reference.mixing_ratio,
+        anchor_reference.segment_index,
+    )
+    model_pressure_domain = (
+        float(np.min(np.log10(run.pressure_bar))),
+        float(np.max(np.log10(run.pressure_bar))),
+    )
+
+    species_results: dict[str, Any] = {}
+    for paper_species, reference in curves.items():
+        model_species = PUBLISHED_TO_MODEL_GAS[paper_species]
+        if paper_species in {"H", "H2"}:
+            continue
+        species_segments = _log_curve_segments(
+            reference.pressure_bar,
+            reference.mixing_ratio,
+            reference.segment_index,
+        )
+        published_intervals = []
+        for _species_segment, species_pressure, _species_value in species_segments:
+            for _anchor_segment, anchor_pressure, _anchor_value in anchor_segments:
+                lower = max(
+                    species_pressure[0],
+                    anchor_pressure[0],
+                    model_pressure_domain[0],
+                )
+                upper = min(
+                    species_pressure[-1],
+                    anchor_pressure[-1],
+                    model_pressure_domain[1],
+                )
+                if lower < upper:
+                    published_intervals.append((lower, upper))
+        published_coverage = _merged_intervals(published_intervals)
+        published_visible_dex = float(
+            sum(upper - lower for lower, upper in published_coverage)
+        )
+        if model_species not in gas_index:
+            species_results[paper_species] = {
+                "availability": "missing_model_species",
+                "model_species": model_species,
+                "sample_count": 0,
+                "paper_visible_overlap_log10_pressure_bar_intervals": [
+                    [lower, upper] for lower, upper in published_coverage
+                ],
+                "paper_visible_overlap_pressure_bar_intervals": [
+                    [10.0**lower, 10.0**upper]
+                    for lower, upper in published_coverage
+                ],
+                "paper_visible_overlap_dex": published_visible_dex,
+                "joint_visible_overlap_log10_pressure_bar_intervals": [],
+                "joint_visible_overlap_pressure_bar_intervals": [],
+                "joint_visible_overlap_dex": 0.0,
+                "model_below_floor_overlap_dex": None,
+                "joint_visible_fraction": None,
+                "model_below_floor_fraction": None,
+                "error_dex": None,
+            }
+            continue
+
+        model_segments = _model_log_ratio_segments(
+            run, gas_index[model_species], anchor_model_index
+        )
+        overlaps = []
+        for (
+            species_segment,
+            species_pressure,
+            species_value,
+        ) in species_segments:
+            for anchor_segment, anchor_pressure, anchor_value in anchor_segments:
+                for model_segment, model_pressure, model_value in model_segments:
+                    lower = max(
+                        species_pressure[0],
+                        anchor_pressure[0],
+                        model_pressure[0],
+                    )
+                    upper = min(
+                        species_pressure[-1],
+                        anchor_pressure[-1],
+                        model_pressure[-1],
+                    )
+                    if lower < upper:
+                        overlaps.append(
+                            (
+                                lower,
+                                upper,
+                                species_segment,
+                                anchor_segment,
+                                model_segment,
+                                species_pressure,
+                                species_value,
+                                anchor_pressure,
+                                anchor_value,
+                                model_pressure,
+                                model_value,
+                            )
+                        )
+        overlaps.sort(key=lambda overlap: overlap[:5])
+        coverage = _merged_intervals(
+            [(overlap[0], overlap[1]) for overlap in overlaps]
+        )
+        joint_visible_dex = float(
+            sum(upper - lower for lower, upper in coverage)
+        )
+        joint_visible_fraction = (
+            joint_visible_dex / published_visible_dex
+            if published_visible_dex > 0.0
+            else None
+        )
+        model_below_floor_dex = max(
+            published_visible_dex - joint_visible_dex, 0.0
+        )
+        model_below_floor_fraction = (
+            model_below_floor_dex / published_visible_dex
+            if published_visible_dex > 0.0
+            else None
+        )
+        if not coverage:
+            species_results[paper_species] = {
+                "availability": (
+                    "model_below_comparison_floor_over_paper_visible_coverage"
+                    if published_visible_dex > 0.0
+                    else "no_shared_published_visible_coverage"
+                ),
+                "model_species": model_species,
+                "sample_count": 0,
+                "paper_visible_overlap_log10_pressure_bar_intervals": [
+                    [lower, upper] for lower, upper in published_coverage
+                ],
+                "paper_visible_overlap_pressure_bar_intervals": [
+                    [10.0**lower, 10.0**upper]
+                    for lower, upper in published_coverage
+                ],
+                "paper_visible_overlap_dex": published_visible_dex,
+                "joint_visible_overlap_log10_pressure_bar_intervals": [],
+                "joint_visible_overlap_pressure_bar_intervals": [],
+                "joint_visible_overlap_dex": joint_visible_dex,
+                "model_below_floor_overlap_dex": model_below_floor_dex,
+                "joint_visible_fraction": joint_visible_fraction,
+                "model_below_floor_fraction": model_below_floor_fraction,
+                "error_dex": None,
+            }
+            continue
+
+        grid = np.linspace(coverage[0][0], coverage[-1][1], int(grid_size))
+        differences = []
+        for point in grid:
+            selected_overlap = next(
+                (
+                    overlap
+                    for overlap in overlaps
+                    if overlap[0] <= point <= overlap[1]
+                ),
+                None,
+            )
+            if selected_overlap is None:
+                continue
+            (
+                _lower,
+                _upper,
+                _species_segment,
+                _anchor_segment,
+                _model_segment,
+                species_pressure,
+                species_value,
+                anchor_pressure,
+                anchor_value,
+                model_pressure,
+                model_value,
+            ) = selected_overlap
+            paper_log_ratio = np.interp(
+                point, species_pressure, species_value
+            ) - np.interp(point, anchor_pressure, anchor_value)
+            model_log_ratio = np.interp(point, model_pressure, model_value)
+            differences.append(model_log_ratio - paper_log_ratio)
+        difference = np.asarray(differences, dtype=float)
+        if difference.size == 0:
+            availability = "no_uniform_grid_samples_in_visible_coverage"
+            errors = None
+        else:
+            availability = "available"
+            errors = {
+                "rmse": float(np.sqrt(np.mean(difference**2))),
+                "mae": float(np.mean(np.abs(difference))),
+                "sampled_maximum_absolute": float(
+                    np.max(np.abs(difference))
+                ),
+                "bias": float(np.mean(difference)),
+            }
+        species_results[paper_species] = {
+            "availability": availability,
+            "model_species": model_species,
+            "sample_count": int(difference.size),
+            "paper_visible_overlap_log10_pressure_bar_intervals": [
+                [lower, upper] for lower, upper in published_coverage
+            ],
+            "paper_visible_overlap_pressure_bar_intervals": [
+                [10.0**lower, 10.0**upper]
+                for lower, upper in published_coverage
+            ],
+            "paper_visible_overlap_dex": published_visible_dex,
+            "joint_visible_overlap_log10_pressure_bar_intervals": [
+                [lower, upper] for lower, upper in coverage
+            ],
+            "joint_visible_overlap_pressure_bar_intervals": [
+                [10.0**lower, 10.0**upper] for lower, upper in coverage
+            ],
+            "joint_visible_overlap_dex": joint_visible_dex,
+            "model_below_floor_overlap_dex": model_below_floor_dex,
+            "joint_visible_fraction": joint_visible_fraction,
+            "model_below_floor_fraction": model_below_floor_fraction,
+            "error_dex": errors,
+        }
+
+    available_count = sum(
+        result["availability"] == "available"
+        for result in species_results.values()
+    )
+    return {
+        "availability": (
+            "available" if available_count else "no_shared_molecular_coverage"
+        ),
+        "case_identifier": run.case.identifier,
+        "reference_contract": reference_contracts.pop(),
+        "raw_overlay_contract": raw_overlay,
+        "paper_only_species": sorted(
+            species
+            for species in curves
+            if PUBLISHED_TO_MODEL_GAS[species] is None
+        ),
+        "h2_relative_dex_comparison": {
+            "anchor_species": "H2",
+            "definition": (
+                "log10[(x_i/x_H2)_model] - "
+                "log10[(x_i/x_H2)_paper]"
+            ),
+            "metric_contract": {
+                "coordinate": "uniform_log10_pressure_bar",
+                "candidate_grid_point_count_per_species": int(grid_size),
+                "interpolation": "piecewise_linear_in_log10_coordinates",
+                "visible_positive_reference_segments_only": True,
+                "reference_visibility_floor_mixing_ratio": (
+                    GAS_MIXING_RATIO_PLOT_FLOOR
+                ),
+                "comparison_floor": GAS_MIXING_RATIO_PLOT_FLOOR,
+                "model_numerator_minimum_mixing_ratio": (
+                    GAS_MIXING_RATIO_PLOT_FLOOR
+                ),
+                "model_h2_anchor_requirement": "positive",
+                "interpolate_across_censored_gaps": False,
+                "excluded_region_interpretation": "censored_not_zero",
+                "model_below_floor_policy": (
+                    "excluded_and_reported_as_censored"
+                ),
+                "vertex_weighting": False,
+            },
+            "available_species_count": available_count,
+            "species": species_results,
+        },
+    }
+
+
 def build_comparison_report(
     runs: Sequence[CompletedRun],
     temperature_references: Mapping[str, PublishedTemperatureReference] | None = None,
+    gas_references: Mapping[
+        str, Mapping[str, PublishedGasReference]
+    ] | None = None,
 ) -> dict[str, Any]:
     """Build machine-readable paper-target comparisons for completed runs."""
 
@@ -836,6 +1424,11 @@ def build_comparison_report(
         load_temperature_references()
         if temperature_references is None
         else dict(temperature_references)
+    )
+    gas_curves = (
+        load_gas_references()
+        if gas_references is None
+        else {case: dict(curves) for case, curves in gas_references.items()}
     )
     cases = []
     for run in runs:
@@ -848,6 +1441,12 @@ def build_comparison_report(
             _missing_temperature_comparison(run.case.identifier)
             if reference is None
             else compare_temperature_profile(run, reference)
+        )
+        case_gas_curves = gas_curves.get(run.case.identifier)
+        gas_comparison = (
+            _missing_gas_comparison(run.case.identifier)
+            if case_gas_curves is None
+            else compare_gas_profiles(run, case_gas_curves)
         )
         cases.append(
             {
@@ -863,12 +1462,13 @@ def build_comparison_report(
                     "normalization": "sum_over_explicit_solver_gas_species",
                     "implicit_neutral_atomic_curves_included": False,
                     "interpretation": (
-                        "The paper panels display neutral atomic curves such "
-                        "as H that are not explicit species in this ExoGibbs "
-                        "network. The model gas panel is therefore not a "
-                        "like-for-like published gas-curve comparison."
+                        "The absolute overlay is diagnostic because the paper "
+                        "includes neutral atoms in its gas normalization. "
+                        "H2-relative molecular ratios cancel that denominator "
+                        "and provide the quantitative comparison."
                     ),
                 },
+                "gas_profile_comparison": gas_comparison,
                 "radius_comparison": {
                     "outer_rcb": _outer_rcb_comparison(run),
                     "transit_20_mbar": _radius_comparison(
@@ -910,14 +1510,17 @@ def build_comparison_report(
         "claim_status": COMPARISON_CLAIM_STATUS,
         "paper_reference": PAPER_REFERENCE,
         "comparison_scope": (
-            "Saved model gas and condensate profiles are rendered on "
-            "paper-style axes but are not published-curve overlays. Published "
-            "neutral atomic gas curves are unavailable, and model gas mixing "
-            "ratios are normalized over the explicit solver species. Published "
-            "temperature curves are vector-plot digitizations compared on a "
-            "uniform shared log-pressure grid. The 20 mbar radius uses the "
-            "scalar value stated in the paper. An outer RCB is compared only "
-            "when the model has a top-connected non-convective region."
+            "Published and model gas mixing ratios are overlaid as a raw "
+            "diagnostic despite their different total-gas normalization. "
+            "Shared molecular curves are compared quantitatively as H2-relative "
+            "dex ratios where the published vector is visible and the model "
+            "numerator is at least 1e-18. Excluded coverage is reported as "
+            "censored, and interpolation does not bridge censored gaps. "
+            "Published temperature curves are vector-plot "
+            "digitizations compared on a uniform shared log-pressure grid. "
+            "The 20 mbar radius uses the scalar value stated in the paper. An "
+            "outer RCB is compared only when the model has a top-connected "
+            "non-convective region."
         ),
         "paper_constraints": {
             "core_mass_earth": PAPER_COMMON_INPUTS.core_mass_earth,
@@ -1010,10 +1613,50 @@ def _plot_published_temperature(
         label_pending = False
 
 
+def _plot_published_gas(
+    axis,
+    references: Mapping[str, PublishedGasReference],
+) -> None:
+    """Overlay independently visible published gas segments as dashed lines."""
+
+    for species, reference in references.items():
+        for segment in np.unique(reference.segment_index):
+            selected = reference.segment_index == segment
+            regimes = {
+                value
+                for value, keep in zip(reference.transport, selected)
+                if keep
+            }
+            if len(regimes) != 1:
+                raise ValueError(
+                    f"Published gas {species!r}, segment {segment} mixes "
+                    "transport regimes."
+                )
+            regime = regimes.pop()
+            axis.plot(
+                reference.mixing_ratio[selected],
+                reference.pressure_bar[selected],
+                color=PUBLISHED_GAS_COLORS[species],
+                linewidth=2.4 if regime == "convective" else 0.8,
+                linestyle="--",
+                label=(
+                    "H (published only)"
+                    if species == "H" and segment == np.min(
+                        reference.segment_index
+                    )
+                    else None
+                ),
+                zorder=3,
+            )
+
+
 def plot_comparison(
     path: Path,
     runs: Sequence[CompletedRun],
     temperature_references: Mapping[str, PublishedTemperatureReference] | None = None,
+    gas_references: Mapping[
+        str, Mapping[str, PublishedGasReference]
+    ] | None = None,
 ) -> None:
     """Write a paper-style three-row profile and scalar-radius comparison."""
 
@@ -1023,6 +1666,11 @@ def plot_comparison(
         load_temperature_references()
         if temperature_references is None
         else dict(temperature_references)
+    )
+    gas_curves = (
+        load_gas_references()
+        if gas_references is None
+        else {case: dict(curves) for case, curves in gas_references.items()}
     )
     column_count = len(runs)
     figure, axes = plt.subplots(
@@ -1042,19 +1690,59 @@ def plot_comparison(
         condensate_index = {
             name: index for index, name in enumerate(run.condensate_species)
         }
+        case_gas_curves = gas_curves.get(run.case.identifier)
+        model_to_published = {
+            model_name: paper_name
+            for paper_name, model_name in PUBLISHED_TO_MODEL_GAS.items()
+            if model_name is not None
+        }
 
         for style_index, (name, label) in enumerate(gas_style):
             if name not in gas_index:
                 continue
             values = run.gas_mixing_ratio[:, gas_index[name]]
             values = np.where(values > 0.0, values, np.nan)
+            paper_name = model_to_published.get(name)
+            if paper_name in PUBLISHED_GAS_COLORS:
+                color = PUBLISHED_GAS_COLORS[paper_name]
+            else:
+                color = color_cycle[style_index % len(color_cycle)]
             _plot_transport_curve(
                 gas_axis,
                 run.pressure_bar,
                 values,
                 run.transport,
-                color=color_cycle[style_index % len(color_cycle)],
+                color=color,
                 label=label,
+            )
+        if case_gas_curves is None:
+            gas_axis.text(
+                0.98,
+                0.97,
+                "Published gas reference unavailable",
+                transform=gas_axis.transAxes,
+                ha="right",
+                va="top",
+                fontsize=7,
+                color="0.35",
+            )
+        else:
+            _plot_published_gas(gas_axis, case_gas_curves)
+            gas_axis.text(
+                0.98,
+                0.97,
+                "solid: ExoExamples\ndashed: published vector\n"
+                "raw overlay: different normalization",
+                transform=gas_axis.transAxes,
+                ha="right",
+                va="top",
+                fontsize=7,
+                color="0.25",
+                bbox={
+                    "facecolor": "white",
+                    "alpha": 0.82,
+                    "edgecolor": "0.8",
+                },
             )
         for style_index, (name, label) in enumerate(condensate_style):
             if name not in condensate_index:
@@ -1071,17 +1759,16 @@ def plot_comparison(
                 color=color_cycle[style_index % len(color_cycle)],
                 label=label,
             )
-        for axis in (gas_axis, condensate_axis):
-            axis.text(
-                0.98,
-                0.97,
-                "ExoExamples only\n(published curves not digitized)",
-                transform=axis.transAxes,
-                ha="right",
-                va="top",
-                fontsize=7,
-                color="0.35",
-            )
+        condensate_axis.text(
+            0.98,
+            0.97,
+            "ExoExamples only\n(published curves not digitized)",
+            transform=condensate_axis.transAxes,
+            ha="right",
+            va="top",
+            fontsize=7,
+            color="0.35",
+        )
         _plot_transport_curve(
             temperature_axis,
             run.pressure_bar,
@@ -1193,8 +1880,8 @@ def plot_comparison(
 
         gas_axis.set_title(_case_title(run.case))
         gas_axis.set_xscale("log")
-        gas_axis.set_xlim(1.0e-18, 2.0)
-        gas_axis.set_xlabel("Model gas mixing ratio")
+        gas_axis.set_xlim(GAS_MIXING_RATIO_PLOT_FLOOR, 2.0)
+        gas_axis.set_xlabel("Gas mixing ratio (raw overlay)")
         condensate_axis.set_xscale("log")
         condensate_axis.set_xlim(1.0e5, 1.0e24)
         condensate_axis.set_xlabel(
@@ -1232,6 +1919,9 @@ def write_comparison(
     output_directory: Path,
     runs: Sequence[CompletedRun],
     temperature_references: Mapping[str, PublishedTemperatureReference] | None = None,
+    gas_references: Mapping[
+        str, Mapping[str, PublishedGasReference]
+    ] | None = None,
 ) -> dict[str, Any]:
     """Write the comparison PNG and its machine-readable report."""
 
@@ -1242,8 +1932,18 @@ def write_comparison(
         if temperature_references is None
         else dict(temperature_references)
     )
-    report = build_comparison_report(runs, references)
-    plot_comparison(destination / OUTPUT_FIGURE_NAME, runs, references)
+    gas_curves = (
+        load_gas_references()
+        if gas_references is None
+        else {case: dict(curves) for case, curves in gas_references.items()}
+    )
+    report = build_comparison_report(runs, references, gas_curves)
+    plot_comparison(
+        destination / OUTPUT_FIGURE_NAME,
+        runs,
+        references,
+        gas_curves,
+    )
     with (destination / OUTPUT_REPORT_NAME).open("w", encoding="utf-8") as stream:
         json.dump(report, stream, indent=2, sort_keys=True, allow_nan=False)
         stream.write("\n")
@@ -1274,6 +1974,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_TEMPERATURE_REFERENCE,
         help="Published vector T(P) reference CSV.",
     )
+    parser.add_argument(
+        "--gas-reference",
+        type=Path,
+        default=DEFAULT_GAS_REFERENCE,
+        help="Published vector gas mixing-ratio reference CSV.",
+    )
     return parser
 
 
@@ -1284,7 +1990,13 @@ def main(argv: list[str] | None = None) -> int:
     try:
         runs = tuple(load_completed_run(path) for path in args.run_directory)
         references = load_temperature_references(args.temperature_reference)
-        write_comparison(args.output_directory, runs, references)
+        gas_references = load_gas_references(args.gas_reference)
+        write_comparison(
+            args.output_directory,
+            runs,
+            references,
+            gas_references,
+        )
     except (OSError, RuntimeError, ValueError) as error:
         print(f"Rocky Raccoon paper comparison failed: {error}", file=sys.stderr)
         return 1

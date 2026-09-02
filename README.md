@@ -45,15 +45,15 @@ convective-to-non-convective transition, not the paper-analog outer RCB: the
 saved column becomes convective again above it. A paper-analog outer RCB is
 therefore unavailable for this run. This is a raccoon-like single-grid
 implementation result, not a paper reproduction or a
-pressure-grid-convergence claim. The ordinary suite reports 53 passed and 21
+pressure-grid-convergence claim. The ordinary suite reports 87 passed and 21
 skipped; the opt-in file contains one three-layer check and 20 exact one-layer
 regressions, including step 1383 with support `(5,)`. ExoExamples does not
 propagate condensate support or skip a failed thermal candidate; it fails
 closed and records every attempt in `run_status.json`.
 
 A standalone postprocessor renders completed saved columns on the Figure 2/5
-axes and compares their temperature profiles with vector traces extracted
-from the paper PDF:
+axes and compares their molecular gas and temperature profiles with vector
+traces extracted from the paper PDF:
 
 ```console
 JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/paper_comparison.py \
@@ -72,13 +72,21 @@ JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/paper_compariso
 
 The command rejects a failed or incomplete `run_status.json`; in particular,
 the current oxygen-rich Figure 2 attempt stopped at a provider failure near `0.0919 bar`
-and is not presented as a completed curve. The gas and condensate panels show
-ExoExamples outputs only. Gas mixing ratios are normalized over the explicit
-solver species, while neutral atomic curves shown by the paper are not
-available for a like-for-like overlay. The dashed paper temperature curves
-come from the checked-in PDF-vector-extraction CSV, not an author data table.
-The comparison remains fixed-`Pbase`/`L` versus the paper's `f`/`Teq` shooting
-solution and is therefore a diagnostic comparison, not a reproduction.
+and is not presented as a completed curve. The gas panel overlays solid
+ExoExamples curves and dashed visible vector segments from the paper. This raw
+absolute-mixing-ratio overlay is diagnostic because the model normalizes over
+the explicit solver gases, whereas the paper's total includes neutral atomic
+gases; atomic H consequently has no model counterpart. The primary molecular
+metric instead compares `log10(x_i/x_H2)` in model and paper, which cancels the
+different total-gas denominators. The metric requires the model numerator to
+remain at or above the paper's `1e-18` plotting floor and reports the remaining
+joint coverage. Published floor contacts, model values below that floor, and
+gaps between visible fragments are censored rather than zero; interpolation
+does not cross them. The vector references are measurements of the PDF artwork,
+not an author data table. Different temperature profiles, unverified absolute
+basal abundances, and fixed-`Pbase`/`L` versus the paper's `f`/`Teq` shooting
+solution remain, so the metrics diagnose the complete present closure rather
+than an isolated chemistry error or a reproduction.
 For the completed oxygen-poor SiO(s)-off/on columns, the 20-mbar radii are
 `1.90664194/1.87389604 Rearth` versus the paper's `2.51/2.28 Rearth`, and the
 vector-temperature RMSE values are `714.8793/709.9582 K`. Both model tops are

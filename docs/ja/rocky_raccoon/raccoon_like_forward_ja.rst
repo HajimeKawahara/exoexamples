@@ -511,7 +511,8 @@ completedしたSiO(s)-off/onのFigure 5 sensitivity comparisonを次で生成す
 
 各output directoryには ``paper_comparison.png`` と ``paper_comparison.json`` を保存する。
 JSONにはcase identity、source provenance、comparison contract、radius availability、
-temperature residual、condensate amount-gauge auditを記録する。
+temperature residual、molecular gas residualとvisible coverage、condensate
+amount-gauge auditを記録する。
 
 .. list-table:: 論文比較を実行する範囲
    :header-rows: 1
@@ -574,43 +575,112 @@ completedした二つのmodel profileはともにtopがconvectiveなので、pap
 diagnosticであり、reproduction scoreではない。
 
 .. image:: raccoon_like_forward_ja_files/raccoon_like_figure2_comparison.png
-   :alt: Rocky Raccoon-like oxygen-poor Figure 2 comparisonと論文temperature trace
+   :alt: Rocky Raccoon-like oxygen-poor Figure 2 comparisonと論文gasおよびtemperature trace
    :width: 100%
    :align: center
 
-*Figure 2 comparison。solidなgas、condensate、temperature curveはExoExamples outputである。
-dashed temperature curveは論文PDFのvector artworkから測定した。pressureはlog scaleで
-下向きに増加する。利用できないoxygen-rich columnを暗黙に置き換えていない。*
+*Figure 2 comparison。solidなgasおよびtemperature curveはExoExamples output、対応する
+dashed curveは論文PDFのvector artworkから測定した。condensateはmodel-onlyである。
+pressureはlog scaleで下向きに増加する。利用できないoxygen-rich columnを暗黙に
+置き換えていない。*
 
 .. image:: raccoon_like_forward_ja_files/raccoon_like_figure5_comparison.png
-   :alt: Rocky Raccoon-like Figure 5 SiO(s) off/on comparisonと論文temperature trace
+   :alt: Rocky Raccoon-like Figure 5 SiO(s) off/on comparisonと論文gasおよびtemperature trace
    :width: 100%
    :align: center
 
 *Figure 5のSiO(s) sensitivity comparison。completedなfixed-boundary model columnを
-pressureが下向きに増加する表示で比較するものであり、論文のshooting solutionではない。*
+公開gasおよびtemperature vectorと比較する。log pressureは下向きに増加する。これは
+論文のshooting solutionではない。*
 
 比較する量と比較しない量
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-solidなgasおよびcondensate curveはExoExamplesの結果だけを示す。gas mixing ratioは、
-explicit solver gas speciesの総和でnormalizeする。論文はatomic Hを含むneutral atomic
-curveも表示するが、それらはこのExoGibbs networkのexplicit speciesではない。またPDFは、
-断片化したすべてのgas/condensate pathとspecies名との信頼できるmachine-readableな対応を
-提供しない。このため公開されたcomposition curveをoverlayせず、model composition panelを
-like-for-likeなresidual comparisonとして解釈してはならない。condensate number densityは
-ExoGibbs amount gaugeからExoExamplesで再構成し、そのelement closure auditを
-``paper_comparison.json`` に記録する。
+公開gas vectorは、legend labelとcurveが共有するexact RGBおよびpanel geometryにより
+speciesへ対応付ける。solid curveはExoExamples、dashed curveは公開vectorの可視segmentで
+ある。このabsolute mixing ratioのoverlayはraw diagnosticであり、like-for-like residualでは
+ない。modelはexplicit solver gasの総和、論文はneutral atomic gasを含むtotal gasで
+normalizeするためである。atomic Hにはmodel側の対応speciesがなく、paper-onlyのdashed
+curveとして表示する。
 
-dashed referenceとして表示するのは公開temperature curveだけである。これは論文PDFの
-8 pageと11 pageから抽出したvector coordinateであり、著者が提供したnumerical tableではない。
-checked-inの :download:`temperature reference CSV
+共有する各分子 :math:`i`（:math:`\mathrm{H_2}` を除く）について、定量residualを
+
+.. math::
+
+   d_i(P) = \log_{10}\!\left[\frac{(x_i/x_{\mathrm{H_2}})_\mathrm{model}}
+                                      {(x_i/x_{\mathrm{H_2}})_\mathrm{paper}}\right]
+
+と定義する。:math:`\mathrm{H_2}` 比によりtotal-gas denominatorは相殺される。各speciesの
+RMSE、MAE、sampled maximum absolute error、biasをdex単位で、:math:`\log_{10}P` に
+一様な512点のcandidate grid上で計算する。公開pathは可視segmentに限定し、model numeratorも
+:math:`x_i\geq10^{-18}` を満たす必要がある。論文のplot floor上のpath、comparison floor未満の
+model値、可視fragment間のgapはzeroではなくcensoredとして扱い、そのgapをinterpolateしない。
+JSONにはpaper-visible pressure spanとjointly visible fractionの両方を記録する。
+
+次の実行値はRMSE、bias、joint/paper-visible coverageをまとめたものである。negative biasは、
+採点区間でmodelの :math:`x_i/x_\mathrm{H_2}` が平均的に小さいことを表す。
+
+.. list-table:: H2-relative molecular comparison（RMSE / bias [dex]、joint coverage）
+   :header-rows: 1
+   :widths: 18 41 41
+
+   * - species
+     - SiO(s) off
+     - SiO(s) on
+   * - :math:`\mathrm{CH_3}`
+     - :math:`1.958 / -1.246` (29.6%)
+     - :math:`1.940 / -1.198` (30.4%)
+   * - :math:`\mathrm{C_2H_2}`
+     - :math:`0.761 / -0.708` (22.0%)
+     - floorより上に公開curveなし
+   * - :math:`\mathrm{C_2H_4}`
+     - :math:`1.472 / -0.977` (28.1%)
+     - floorより上に公開curveなし
+   * - :math:`\mathrm{CH_4}`
+     - :math:`0.132 / +0.041` (100%)
+     - :math:`2.044 / +1.082` (100%)
+   * - :math:`\mathrm{CO}`
+     - :math:`1.369 / -1.072` (24.5%)
+     - :math:`3.274 / -2.086` (34.0%)
+   * - :math:`\mathrm{CO_2}`
+     - floorより上に公開curveなし
+     - :math:`2.906 / -1.984` (34.1%)
+   * - :math:`\mathrm{H_2O}`
+     - :math:`5.890 / -5.067` (100%)
+     - :math:`0.177 / -0.177` (100%)
+   * - :math:`\mathrm{Mg(OH)_2}`
+     - :math:`0.902 / -0.785` (86.9%)
+     - :math:`1.705 / -1.188` (28.1%)
+   * - :math:`\mathrm{SiH_3}`
+     - :math:`2.530 / -1.488` (30.3%)
+     - :math:`0.436 / -0.391` (95.3%)
+   * - :math:`\mathrm{SiH_4}`
+     - :math:`3.755 / -2.311` (36.7%)
+     - :math:`0.620 / -0.491` (89.3%)
+   * - :math:`\mathrm{SiO}`
+     - :math:`1.511 / -1.105` (24.8%)
+     - :math:`0.652 / -0.609` (92.4%)
+
+結果はspeciesごとに大きく異なり、chemistry-only errorではない。特にjoint fractionが小さい
+場合、saved model abundanceはpaper-visible pressure spanの大部分で :math:`10^{-18}` 未満で
+ある。そのcensored regionに人工的なresidualは割り当てない。
+
+gasおよびtemperature referenceは、論文PDFの8 pageと11 pageから抽出したvector coordinateで
+あり、著者が提供したnumerical tableではない。checked-inの :download:`temperature reference CSV
 <../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.csv>` と
 :download:`provenance JSON
-<../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.json>` は、extraction
-contract、paper hash、case、row countを記録する。extractorは太いconvective pathと細い
-non-convective pathを分離したまま保持し、公開pointを追加でinterpolateしない。このtraceは
-visual/shape comparisonのためのもので、likelihood計算には用いない。
+<../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.json>`、および対応する
+:download:`gas reference CSV
+<../../rocky_raccoon/data/rocky_raccoon_gas_vector_reference.csv>` と
+:download:`gas provenance JSON
+<../../rocky_raccoon/data/rocky_raccoon_gas_vector_reference.json>` は、extraction contract、
+paper hash、case、exactな13-species color binding、row countを記録する。extractorは太い
+convective pathと細いnon-convective pathを分離したまま保持し、censored segment間を
+interpolateしない。このtraceはdiagnostic comparisonのためのもので、likelihood計算には
+用いない。
+
+condensate curveはmodel-onlyのままである。そのnumber densityはExoGibbs amount gaugeから
+ExoExamplesで再構成し、element closure auditを ``paper_comparison.json`` に記録する。
 
 最後に、現在のmodelは :math:`P_\mathrm{base}` とluminosity :math:`L` を固定する。一方、
 論文はhydrogen envelope mass fraction :math:`f=0.03` とequilibrium temperature
@@ -639,7 +709,7 @@ opt-inである。
      python -m pytest -q tests/rocky_raccoon/test_real_column.py
 
 opt-in environment variableなしでは、Rocky Raccoon test directory全体は現在
-53 passed、21 skippedである。opt-in fileには、一つのthree-layer provider testと20個のhard
+87 passed、21 skippedである。opt-in fileには、一つのthree-layer provider testと20個のhard
 passing one-layer regressionがある。内訳は旧positive-trace Mg state、四つの初期provider
 boundary、解決済みstep 378/380、step 698、702、774、999、1082、さらにpost-bridgeのstep
 1075、1076、1077、1084、1186、1342、1372、1383である。すべてunconditional hard passで、
@@ -647,6 +717,7 @@ boundary、解決済みstep 378/380、step 698、702、774、999、1082、さら
 
 上記completed runによりdefault fixed-boundary実装は検証済みだが、pressure-grid convergenceは
 未検証である。上のpaper-facing figureは利用可能なsaved columnのdiagnostic comparisonであり、
-論文全体の再現ではない。envelope massとouter temperatureに対するshooting、like-for-likeな
-公開composition curve、non-ideal EOS/fugacity、magma--gas equilibrium、厳密な10-bar ExoJAX
-stitch、spectrum、retrievalは、documented grid-convergence studyが行われるまで保留する。
+論文全体の再現ではない。envelope massとouter temperatureに対するshooting、strictな
+absolute-normalizationとneutral-atom parity、公開condensate curve、non-ideal EOS/fugacity、
+magma--gas equilibrium、厳密な10-bar ExoJAX stitch、spectrum、retrievalは、documented
+grid-convergence studyが行われるまで保留する。

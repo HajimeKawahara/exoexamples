@@ -169,6 +169,22 @@ def _matching_reference(run):
     )
 
 
+def _gas_reference(run, species, pressure, mixing_ratio, segments=None):
+    pressure = np.asarray(pressure, dtype=float)
+    if segments is None:
+        segments = np.zeros(pressure.size, dtype=int)
+    segments = np.asarray(segments, dtype=int)
+    return comparison.PublishedGasReference(
+        case_identifier=run.case.identifier,
+        species=species,
+        reference_contract="published_vector_plot_digitization",
+        pressure_bar=pressure,
+        mixing_ratio=np.asarray(mixing_ratio, dtype=float),
+        segment_index=segments,
+        transport=tuple("convective" for _ in pressure),
+    )
+
+
 def test_condensate_density_recovery_audits_every_element():
     pressure, temperature, gas_x, gas_total, condensates, inventory = (
         _synthetic_arrays()
@@ -288,6 +304,195 @@ def test_temperature_error_uses_uniform_log_pressure_grid_and_deduplicates(
     }
 
 
+def test_gas_reference_loader_validates_and_groups_curves(tmp_path):
+    path = tmp_path / "gas.csv"
+    fields = [
+        "reference_contract",
+        "case_id",
+        "quantity",
+        "species",
+        "segment_index",
+        "transport_regime",
+        "pressure_bar",
+        "mixing_ratio",
+        "ignored_metadata",
+    ]
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for species, values in (("H2", (0.8, 0.7)), ("H2O", (0.2, 0.3))):
+            for pressure, value in zip((1.0, 0.1), values):
+                writer.writerow(
+                    {
+                        "reference_contract": (
+                            "published_vector_plot_digitization"
+                        ),
+                        "case_id": "figure2_mg_si_o_1_1_3",
+                        "quantity": "gas_mixing_ratio",
+                        "species": species,
+                        "segment_index": 0,
+                        "transport_regime": "convective",
+                        "pressure_bar": pressure,
+                        "mixing_ratio": value,
+                        "ignored_metadata": "accepted",
+                    }
+                )
+
+    references = comparison.load_gas_references(path)
+
+    assert set(references["figure2_mg_si_o_1_1_3"]) == {"H2", "H2O"}
+    assert references["figure2_mg_si_o_1_1_3"]["H2O"].mixing_ratio.tolist() == [
+        0.2,
+        0.3,
+    ]
+
+
+def test_h2_relative_gas_error_uses_visible_segments_without_crossing_gap(
+    tmp_path,
+):
+    run = comparison.load_completed_run(
+        _write_fake_run(tmp_path), chemistry_setup=_fake_setup()
+    )
+    pressure = np.asarray([1.0, 0.6, 0.2, 0.1])
+    log_weight = -np.log10(pressure)
+    model_ratio = 10.0 ** (
+        np.log10(1.0 / 3.0)
+        + log_weight * (np.log10(2.0 / 3.0) - np.log10(1.0 / 3.0))
+    )
+    references = {
+        "H2": _gas_reference(run, "H2", [1.0, 0.1], [0.5, 0.5]),
+        "H2O": _gas_reference(
+            run,
+            "H2O",
+            pressure,
+            0.5 * model_ratio,
+            segments=[0, 0, 1, 1],
+        ),
+        "H": _gas_reference(run, "H", [1.0, 0.1], [1.0e-4, 1.0e-3]),
+    }
+
+    result = comparison.compare_gas_profiles(run, references, grid_size=101)
+
+    species = result["h2_relative_dex_comparison"]["species"]["H2O"]
+    assert result["availability"] == "available"
+    assert result["paper_only_species"] == ["H"]
+    assert 0 < species["sample_count"] < 101
+    assert len(species["joint_visible_overlap_pressure_bar_intervals"]) == 2
+    expected_coverage = np.log10(1.0 / 0.6) + np.log10(0.2 / 0.1)
+    assert species["paper_visible_overlap_dex"] == pytest.approx(
+        expected_coverage
+    )
+    assert species["joint_visible_overlap_dex"] == pytest.approx(
+        expected_coverage
+    )
+    assert species["joint_visible_fraction"] == pytest.approx(1.0)
+    assert species["model_below_floor_overlap_dex"] == pytest.approx(0.0)
+    assert species["model_below_floor_fraction"] == pytest.approx(0.0)
+    assert species["error_dex"] == {
+        "rmse": pytest.approx(0.0, abs=1.0e-14),
+        "mae": pytest.approx(0.0, abs=1.0e-14),
+        "sampled_maximum_absolute": pytest.approx(0.0, abs=1.0e-14),
+        "bias": pytest.approx(0.0, abs=1.0e-14),
+    }
+    assert "H" not in result["h2_relative_dex_comparison"]["species"]
+    contract = result["h2_relative_dex_comparison"]["metric_contract"]
+    assert contract["model_numerator_minimum_mixing_ratio"] == 1.0e-18
+    assert contract["excluded_region_interpretation"] == "censored_not_zero"
+    assert contract["model_below_floor_policy"] == (
+        "excluded_and_reported_as_censored"
+    )
+
+
+def test_model_ratio_segments_split_at_plot_floor_without_bridging():
+    run = SimpleNamespace(
+        case=SimpleNamespace(identifier="figure2_mg_si_o_1_1_3"),
+        gas_species=("H2", "H2O1"),
+        pressure_bar=np.asarray([1.0, 0.1, 0.01, 0.001, 0.0001]),
+        gas_mixing_ratio=np.asarray(
+            [
+                [0.5, 1.0e-10],
+                [0.5, 1.0e-18],
+                [0.5, 1.0e-19],
+                [0.5, 1.0e-18],
+                [0.5, 1.0e-10],
+            ]
+        ),
+    )
+
+    segments = comparison._model_log_ratio_segments(run, 1, 0)
+
+    assert len(segments) == 2
+    assert [pressure.size for _index, pressure, _ratio in segments] == [2, 2]
+    assert all(
+        not (pressure[0] < -2.0 < pressure[-1])
+        for _index, pressure, _ratio in segments
+    )
+    references = {
+        "H2": _gas_reference(run, "H2", [1.0, 0.0001], [0.5, 0.5]),
+        "H2O": _gas_reference(
+            run, "H2O", [1.0, 0.0001], [1.0e-10, 1.0e-10]
+        ),
+    }
+    species = comparison.compare_gas_profiles(
+        run, references, grid_size=101
+    )["h2_relative_dex_comparison"]["species"]["H2O"]
+    assert len(species["joint_visible_overlap_pressure_bar_intervals"]) == 2
+    assert species["paper_visible_overlap_dex"] == pytest.approx(4.0)
+    assert species["joint_visible_overlap_dex"] == pytest.approx(2.0)
+    assert species["model_below_floor_overlap_dex"] == pytest.approx(2.0)
+    assert species["joint_visible_fraction"] == pytest.approx(0.5)
+    assert species["model_below_floor_fraction"] == pytest.approx(0.5)
+
+
+def test_gas_comparison_reports_paper_coverage_when_model_is_below_floor():
+    run = SimpleNamespace(
+        case=SimpleNamespace(identifier="figure2_mg_si_o_1_1_3"),
+        gas_species=("H2", "H2O1"),
+        pressure_bar=np.asarray([1.0, 0.1]),
+        gas_mixing_ratio=np.asarray([[0.5, 1.0e-19], [0.5, 1.0e-20]]),
+    )
+    references = {
+        "H2": _gas_reference(run, "H2", [1.0, 0.1], [0.5, 0.5]),
+        "H2O": _gas_reference(run, "H2O", [1.0, 0.1], [1.0e-8, 1.0e-9]),
+    }
+
+    species = comparison.compare_gas_profiles(run, references)[
+        "h2_relative_dex_comparison"
+    ]["species"]["H2O"]
+
+    assert species["availability"] == (
+        "model_below_comparison_floor_over_paper_visible_coverage"
+    )
+    assert species["paper_visible_overlap_dex"] == pytest.approx(1.0)
+    assert species["joint_visible_overlap_dex"] == pytest.approx(0.0)
+    assert species["model_below_floor_overlap_dex"] == pytest.approx(1.0)
+    assert species["joint_visible_fraction"] == pytest.approx(0.0)
+    assert species["model_below_floor_fraction"] == pytest.approx(1.0)
+
+
+def test_published_gas_colors_match_audited_vector_rgb():
+    assert comparison.PUBLISHED_GAS_COLORS["CH3"] == (
+        0.86665344,
+        0.62744141,
+        0.86665344,
+    )
+    assert comparison.PUBLISHED_GAS_COLORS["H2"] == (
+        0.66273499,
+        0.66273499,
+        0.66273499,
+    )
+    assert comparison.PUBLISHED_GAS_COLORS["CH4"] == (
+        1.0,
+        0.41175842,
+        0.70587158,
+    )
+    assert comparison.PUBLISHED_GAS_COLORS["SiO"] == (
+        0.80390930,
+        0.36077881,
+        0.36077881,
+    )
+
+
 def test_report_and_three_row_figure_record_targets_and_missing_reference(
     tmp_path,
 ):
@@ -296,7 +501,7 @@ def test_report_and_three_row_figure_record_targets_and_missing_reference(
     )
     output = tmp_path / "comparison"
 
-    report = comparison.write_comparison(output, (run, run), {})
+    report = comparison.write_comparison(output, (run, run), {}, {})
 
     case = report["cases"][0]
     assert report["claim_status"] == comparison.COMPARISON_CLAIM_STATUS
@@ -332,8 +537,16 @@ def test_profile_figure_uses_pressure_as_an_upward_decreasing_vertical_axis(
     )
     original_close = comparison.plt.close
     monkeypatch.setattr(comparison.plt, "close", lambda _figure: None)
+    gas_references = {
+        run.case.identifier: {
+            "H2": _gas_reference(run, "H2", [1.0, 0.1], [0.8, 0.7]),
+            "H": _gas_reference(run, "H", [1.0, 0.1], [1.0e-4, 1.0e-3]),
+        }
+    }
 
-    comparison.plot_comparison(tmp_path / "profile.png", (run,), {})
+    comparison.plot_comparison(
+        tmp_path / "profile.png", (run,), {}, gas_references
+    )
 
     figure = comparison.plt.gcf()
     gas_axis, condensate_axis, temperature_axis = figure.axes
@@ -346,8 +559,22 @@ def test_profile_figure_uses_pressure_as_an_upward_decreasing_vertical_axis(
     assert gas_axis.get_xscale() == "log"
     assert condensate_axis.get_xscale() == "log"
     assert temperature_axis.get_xscale() == "linear"
-    assert gas_axis.get_xlabel() == "Model gas mixing ratio"
+    assert gas_axis.get_xlabel() == "Gas mixing ratio (raw overlay)"
     assert temperature_axis.get_xlabel() == "Temperature (K)"
+    h2_color = comparison.PUBLISHED_GAS_COLORS["H2"]
+    assert any(
+        line.get_linestyle() == "-" and line.get_color() == h2_color
+        for line in gas_axis.lines
+    )
+    assert any(
+        line.get_linestyle() == "--" and line.get_color() == h2_color
+        for line in gas_axis.lines
+    )
+    h2o_color = comparison.PUBLISHED_GAS_COLORS["H2O"]
+    assert any(
+        line.get_linestyle() == "-" and line.get_color() == h2o_color
+        for line in gas_axis.lines
+    )
     original_close(figure)
 
 
@@ -359,7 +586,7 @@ def test_detached_nonconvective_transition_is_not_compared_as_paper_rcb(
         chemistry_setup=_fake_setup(),
     )
 
-    outer_rcb = comparison.build_comparison_report((run,), {})["cases"][0][
+    outer_rcb = comparison.build_comparison_report((run,), {}, {})["cases"][0][
         "radius_comparison"
     ]["outer_rcb"]
 
@@ -384,6 +611,7 @@ def test_repeatable_run_directory_parser():
 
     assert args.run_directory == [comparison.Path("first"), comparison.Path("second")]
     assert args.temperature_reference == comparison.DEFAULT_TEMPERATURE_REFERENCE
+    assert args.gas_reference == comparison.DEFAULT_GAS_REFERENCE
 
 
 def test_cli_reports_provider_runtime_error_without_traceback(
@@ -417,4 +645,16 @@ def test_committed_temperature_reference_has_supported_case_contracts():
     assert all(
         reference.reference_contract == "published_vector_plot_digitization"
         for reference in references.values()
+    )
+
+
+def test_committed_gas_reference_has_h2_anchor_and_audited_species():
+    references = comparison.load_gas_references()
+
+    assert "figure2_mg_si_o_1_1_3" in references
+    assert "figure2_mg_si_o_1_1_4" in references
+    assert all("H2" in curves for curves in references.values())
+    assert all(
+        set(curves) <= set(comparison.PUBLISHED_TO_MODEL_GAS)
+        for curves in references.values()
     )

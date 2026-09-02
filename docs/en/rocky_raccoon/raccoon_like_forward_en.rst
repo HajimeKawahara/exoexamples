@@ -572,7 +572,8 @@ Generate the completed Figure 5 SiO(s)-off/on sensitivity comparison with:
 Each output directory contains ``paper_comparison.png`` and
 ``paper_comparison.json``.  The JSON records the case identity, source
 provenance, comparison contract, radius availability, temperature residuals,
-and the condensate amount-gauge audit.
+molecular gas residuals and visible coverage, and the condensate amount-gauge
+audit.
 
 .. list-table:: Execution boundary for the paper-facing comparisons
    :header-rows: 1
@@ -637,50 +638,123 @@ quantifies the present fixed-boundary response; it is not a reproduction
 score.
 
 .. image:: raccoon_like_forward_en_files/raccoon_like_figure2_comparison.png
-   :alt: Rocky Raccoon-like oxygen-poor Figure 2 comparison with the published temperature trace
+   :alt: Rocky Raccoon-like oxygen-poor Figure 2 comparison with published gas and temperature traces
    :width: 100%
    :align: center
 
-*Figure 2 comparison.  Solid gas, condensate, and temperature curves are
-ExoExamples outputs.  The dashed temperature curve is measured from the
-published PDF vector artwork.  Pressure is logarithmic and increases
-downward.  The unavailable oxygen-rich column is not
-silently replaced.*
+*Figure 2 comparison.  Solid gas and temperature curves are ExoExamples
+outputs; matching dashed curves are measured from the published PDF vector
+artwork.  Condensates remain model-only.  Pressure is logarithmic and
+increases downward.  The unavailable oxygen-rich column is not silently
+replaced.*
 
 .. image:: raccoon_like_forward_en_files/raccoon_like_figure5_comparison.png
-   :alt: Rocky Raccoon-like Figure 5 SiO(s) off and on comparison with published temperature traces
+   :alt: Rocky Raccoon-like Figure 5 SiO(s) off and on comparison with published gas and temperature traces
    :width: 100%
    :align: center
 
 *Figure 5 SiO(s) sensitivity comparison.  It compares completed fixed-boundary
-model columns with logarithmic pressure increasing downward; it is not the
-paper's shooting solution.*
+model columns with the visible published gas and temperature vectors.
+Logarithmic pressure increases downward.  This is not the paper's shooting
+solution.*
 
 What is and is not compared
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The solid gas and condensate curves are ExoExamples results only.  Gas mixing
-ratios are normalized by the sum over the explicit solver gas species.  The
-paper also displays neutral atomic curves, including atomic H, that are not
-explicit species in this ExoGibbs network.  The PDF does not provide a
-reliable machine-readable species binding for all fragmented gas and
-condensate paths.  Consequently those published composition curves are not
-overlaid, and the model composition panels must not be interpreted as a
-like-for-like residual comparison.  Condensate number densities are converted
-from the ExoGibbs amount gauge by an ExoExamples reconstruction whose element
-closure is audited and recorded in ``paper_comparison.json``.
+Published gas vectors are bound to species by the exact RGB shared by each
+legend label and curve, together with panel geometry.  Solid curves show
+ExoExamples and dashed curves show the visible published vector segments.
+This absolute-mixing-ratio overlay is a raw diagnostic, not a like-for-like
+residual: model fractions are normalized over the explicit solver gases,
+whereas the paper's total includes neutral atomic gases.  Atomic H therefore
+has no model counterpart and is shown as a paper-only dashed curve.
 
-Only the published temperature curves are shown as dashed references.  They
-are vector coordinates extracted from pages 8 and 11 of the paper PDF, not an
-author-provided numerical table.  The checked-in
+For every shared molecule :math:`i` other than :math:`\mathrm{H_2}`, the
+quantitative residual is
+
+.. math::
+
+   d_i(P) = \log_{10}\!\left[\frac{(x_i/x_{\mathrm{H_2}})_\mathrm{model}}
+                                      {(x_i/x_{\mathrm{H_2}})_\mathrm{paper}}\right].
+
+The :math:`\mathrm{H_2}` ratio cancels the different total-gas denominators.
+RMSE, MAE, sampled maximum absolute error, and bias are evaluated in dex on a
+512-point candidate grid uniform in :math:`\log_{10}P`.  Each published path
+is restricted to its visible segment, and the model numerator must also have
+:math:`x_i\geq10^{-18}`.  A path on the paper plotting floor, a model value
+below that comparison floor, and a gap between visible fragments are censored
+rather than zero.  No interpolation crosses such a gap.  The JSON reports
+both the paper-visible pressure span and the jointly visible fraction.
+
+The following executed values summarize RMSE, bias, and joint/paper-visible
+coverage.  A negative bias means that the model :math:`x_i/x_\mathrm{H_2}` is
+smaller on average over the scored interval.
+
+.. list-table:: H2-relative molecular comparison (RMSE / bias in dex; joint coverage)
+   :header-rows: 1
+   :widths: 18 41 41
+
+   * - Species
+     - SiO(s) off
+     - SiO(s) on
+   * - :math:`\mathrm{CH_3}`
+     - :math:`1.958 / -1.246` (29.6%)
+     - :math:`1.940 / -1.198` (30.4%)
+   * - :math:`\mathrm{C_2H_2}`
+     - :math:`0.761 / -0.708` (22.0%)
+     - no published curve above the floor
+   * - :math:`\mathrm{C_2H_4}`
+     - :math:`1.472 / -0.977` (28.1%)
+     - no published curve above the floor
+   * - :math:`\mathrm{CH_4}`
+     - :math:`0.132 / +0.041` (100%)
+     - :math:`2.044 / +1.082` (100%)
+   * - :math:`\mathrm{CO}`
+     - :math:`1.369 / -1.072` (24.5%)
+     - :math:`3.274 / -2.086` (34.0%)
+   * - :math:`\mathrm{CO_2}`
+     - no published curve above the floor
+     - :math:`2.906 / -1.984` (34.1%)
+   * - :math:`\mathrm{H_2O}`
+     - :math:`5.890 / -5.067` (100%)
+     - :math:`0.177 / -0.177` (100%)
+   * - :math:`\mathrm{Mg(OH)_2}`
+     - :math:`0.902 / -0.785` (86.9%)
+     - :math:`1.705 / -1.188` (28.1%)
+   * - :math:`\mathrm{SiH_3}`
+     - :math:`2.530 / -1.488` (30.3%)
+     - :math:`0.436 / -0.391` (95.3%)
+   * - :math:`\mathrm{SiH_4}`
+     - :math:`3.755 / -2.311` (36.7%)
+     - :math:`0.620 / -0.491` (89.3%)
+   * - :math:`\mathrm{SiO}`
+     - :math:`1.511 / -1.105` (24.8%)
+     - :math:`0.652 / -0.609` (92.4%)
+
+These mixed results are informative but are not chemistry-only errors.  In
+particular, a small joint fraction means that the saved model abundance lies
+below :math:`10^{-18}` over most of the paper-visible pressure span; that
+censored region is not assigned an artificial residual.
+
+The gas and temperature references are vector coordinates extracted from
+pages 8 and 11 of the paper PDF, not an author-provided numerical table.  The
+checked-in
 :download:`temperature reference CSV
 <../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.csv>` and
 :download:`provenance JSON
 <../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.json>`
-record the extraction contract, paper hash, cases, and row counts.  The
-extractor preserves separate thick convective and thin non-convective vector
-paths and does not interpolate extra published points.  These traces support
-visual and shape comparisons, not a likelihood calculation.
+and the corresponding :download:`gas reference CSV
+<../../rocky_raccoon/data/rocky_raccoon_gas_vector_reference.csv>` and
+:download:`gas provenance JSON
+<../../rocky_raccoon/data/rocky_raccoon_gas_vector_reference.json>` record the
+extraction contract, paper hash, cases, exact 13-species color binding, and row
+counts.  The extractor preserves separate thick convective and thin
+non-convective vector paths and does not interpolate across censored segments.
+These traces support diagnostic comparisons, not a likelihood calculation.
+
+Condensate curves remain model-only.  Their number densities are converted
+from the ExoGibbs amount gauge by an ExoExamples reconstruction whose element
+closure is audited and recorded in ``paper_comparison.json``.
 
 Finally, the model fixes :math:`P_\mathrm{base}` and luminosity :math:`L`.
 The paper instead solves for those quantities by shooting to hydrogen envelope
@@ -710,7 +784,7 @@ compiles a substantial JAX kernel:
      python -m pytest -q tests/rocky_raccoon/test_real_column.py
 
 Without the opt-in environment variable, the full Rocky Raccoon test directory
-currently reports 53 passed and 21 skipped.  The opt-in file contains one
+currently reports 87 passed and 21 skipped.  The opt-in file contains one
 three-layer provider test and 20 hard passing one-layer regressions: the
 former positive-trace Mg state, four earlier provider boundaries, the resolved
 step-378 and step-380 states, step 698, 702, 774, 999, and 1082, and the eight
@@ -722,6 +796,7 @@ The default fixed-boundary implementation is verified by the completed run
 above, but pressure-grid convergence remains unverified.  The paper-facing
 figures above are diagnostic comparisons of available saved columns, not full
 paper reproductions.  Shooting for envelope mass and outer temperature,
-like-for-like published composition curves, non-ideal EOS/fugacity,
-magma--gas equilibrium, the exact 10-bar ExoJAX stitch, spectra, and retrieval
-remain deferred pending a documented grid-convergence study.
+strict absolute-normalization and neutral-atom parity, published condensate
+curves, non-ideal EOS/fugacity, magma--gas equilibrium, the exact 10-bar ExoJAX
+stitch, spectra, and retrieval remain deferred pending a documented
+grid-convergence study.
