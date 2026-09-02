@@ -643,7 +643,8 @@ score.
 
 *Figure 2 comparison.  Solid gas, condensate, and temperature curves are
 ExoExamples outputs.  The dashed temperature curve is measured from the
-published PDF vector artwork.  The unavailable oxygen-rich column is not
+published PDF vector artwork.  Pressure is logarithmic and increases
+downward.  The unavailable oxygen-rich column is not
 silently replaced.*
 
 .. image:: raccoon_like_forward_en_files/raccoon_like_figure5_comparison.png
@@ -652,7 +653,8 @@ silently replaced.*
    :align: center
 
 *Figure 5 SiO(s) sensitivity comparison.  It compares completed fixed-boundary
-model columns; it is not the paper's shooting solution.*
+model columns with logarithmic pressure increasing downward; it is not the
+paper's shooting solution.*
 
 What is and is not compared
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

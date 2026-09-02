@@ -963,11 +963,11 @@ def _plot_transport_curve(
     label: str,
 ) -> None:
     finite_values = np.asarray(values, dtype=float)
-    axis.plot(pressure, finite_values, color=color, linewidth=0.8, alpha=0.9)
+    axis.plot(finite_values, pressure, color=color, linewidth=0.8, alpha=0.9)
     convective = np.asarray(transport) == "convective"
     axis.plot(
-        pressure,
         np.where(convective, finite_values, np.nan),
+        pressure,
         color=color,
         linewidth=2.4,
         label=label,
@@ -999,8 +999,8 @@ def _plot_published_temperature(
             )
         regime = segment_transport.pop()
         axis.plot(
-            reference.pressure_bar[selected],
             reference.temperature_k[selected],
+            reference.pressure_bar[selected],
             color="tab:blue",
             linewidth=2.4 if regime == "convective" else 0.8,
             linestyle="--",
@@ -1030,8 +1030,10 @@ def plot_comparison(
         column_count,
         figsize=(5.2 * column_count, 11.5),
         squeeze=False,
-        sharex="col",
+        sharey=True,
     )
+    pressure_max = max(float(np.max(run.pressure_bar)) for run in runs)
+    pressure_min = min(float(np.min(run.pressure_bar)) for run in runs)
     color_cycle = tuple(plt.get_cmap("tab20").colors)
     for column, run in enumerate(runs):
         gas_axis, condensate_axis, temperature_axis = axes[:, column]
@@ -1114,15 +1116,15 @@ def plot_comparison(
         )
         if changes.size:
             temperature_axis.scatter(
-                run.pressure_bar[changes],
                 run.temperature_k[changes],
+                run.pressure_bar[changes],
                 color="black",
                 s=14,
                 zorder=4,
             )
         temperature_axis.scatter(
-            [PAPER_COMMON_INPUTS.top_pressure_bar],
             [PAPER_COMMON_INPUTS.equilibrium_temperature_k],
+            [PAPER_COMMON_INPUTS.top_pressure_bar],
             marker="*",
             s=80,
             color="tab:orange",
@@ -1190,16 +1192,16 @@ def plot_comparison(
             )
 
         gas_axis.set_title(_case_title(run.case))
-        gas_axis.set_yscale("log")
-        gas_axis.set_ylim(1.0e-18, 2.0)
-        condensate_axis.set_yscale("log")
-        condensate_axis.set_ylim(1.0e5, 1.0e24)
-        temperature_axis.set_ylim(0.0, 4200.0)
-        temperature_axis.set_xscale("log")
-        temperature_axis.set_xlim(
-            float(np.max(run.pressure_bar)), float(np.min(run.pressure_bar))
+        gas_axis.set_xscale("log")
+        gas_axis.set_xlim(1.0e-18, 2.0)
+        gas_axis.set_xlabel("Model gas mixing ratio")
+        condensate_axis.set_xscale("log")
+        condensate_axis.set_xlim(1.0e5, 1.0e24)
+        condensate_axis.set_xlabel(
+            r"Model condensate number density (cm$^{-3}$)"
         )
-        temperature_axis.set_xlabel("Pressure (bar)")
+        temperature_axis.set_xlim(0.0, 4200.0)
+        temperature_axis.set_xlabel("Temperature (K)")
         for axis, font_size, columns in (
             (gas_axis, 7, 2),
             (condensate_axis, 7, 2),
@@ -1209,11 +1211,11 @@ def plot_comparison(
             if handles:
                 axis.legend(fontsize=font_size, ncol=columns, loc="lower left")
         for axis in (gas_axis, condensate_axis, temperature_axis):
+            axis.set_yscale("log")
+            axis.set_ylim(pressure_max, pressure_min)
             axis.grid(alpha=0.18, which="both")
 
-    axes[0, 0].set_ylabel("Model gas mixing ratio")
-    axes[1, 0].set_ylabel(r"Model condensate number density (cm$^{-3}$)")
-    axes[2, 0].set_ylabel("Temperature (K)")
+    figure.supylabel("Pressure (bar)")
     figure.suptitle(
         "Rocky Raccoon-like vs. Misener et al. (2026)\n"
         "Fixed-boundary diagnostic—not a reproduction",

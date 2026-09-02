@@ -323,6 +323,34 @@ def test_report_and_three_row_figure_record_targets_and_missing_reference(
     assert len(stored["cases"]) == 2
 
 
+def test_profile_figure_uses_pressure_as_an_upward_decreasing_vertical_axis(
+    monkeypatch,
+    tmp_path,
+):
+    run = comparison.load_completed_run(
+        _write_fake_run(tmp_path), chemistry_setup=_fake_setup()
+    )
+    original_close = comparison.plt.close
+    monkeypatch.setattr(comparison.plt, "close", lambda _figure: None)
+
+    comparison.plot_comparison(tmp_path / "profile.png", (run,), {})
+
+    figure = comparison.plt.gcf()
+    gas_axis, condensate_axis, temperature_axis = figure.axes
+    assert all(
+        axis.get_yscale() == "log"
+        and axis.get_ylim()[0] > axis.get_ylim()[1]
+        for axis in figure.axes
+    )
+    assert gas_axis.get_shared_y_axes().joined(gas_axis, temperature_axis)
+    assert gas_axis.get_xscale() == "log"
+    assert condensate_axis.get_xscale() == "log"
+    assert temperature_axis.get_xscale() == "linear"
+    assert gas_axis.get_xlabel() == "Model gas mixing ratio"
+    assert temperature_axis.get_xlabel() == "Temperature (K)"
+    original_close(figure)
+
+
 def test_detached_nonconvective_transition_is_not_compared_as_paper_rcb(
     tmp_path,
 ):

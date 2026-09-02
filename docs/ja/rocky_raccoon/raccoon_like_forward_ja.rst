@@ -579,8 +579,8 @@ diagnosticであり、reproduction scoreではない。
    :align: center
 
 *Figure 2 comparison。solidなgas、condensate、temperature curveはExoExamples outputである。
-dashed temperature curveは論文PDFのvector artworkから測定した。利用できないoxygen-rich
-columnを暗黙に置き換えていない。*
+dashed temperature curveは論文PDFのvector artworkから測定した。pressureはlog scaleで
+下向きに増加する。利用できないoxygen-rich columnを暗黙に置き換えていない。*
 
 .. image:: raccoon_like_forward_ja_files/raccoon_like_figure5_comparison.png
    :alt: Rocky Raccoon-like Figure 5 SiO(s) off/on comparisonと論文temperature trace
@@ -588,7 +588,7 @@ columnを暗黙に置き換えていない。*
    :align: center
 
 *Figure 5のSiO(s) sensitivity comparison。completedなfixed-boundary model columnを
-比較するものであり、論文のshooting solutionではない。*
+pressureが下向きに増加する表示で比較するものであり、論文のshooting solutionではない。*
 
 比較する量と比較しない量
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
