@@ -201,12 +201,14 @@ The current execution boundary is explicit:
 
 Direct replay of the oxygen-rich failure state succeeds on CPU with
 `Mg(OH)2(s)` support but fails on CUDA with empty support. The divergence is
-localized to the initial element potential: the six-row capacity fit has rank
-five and preserves a backend-dependent null-space component before the
-structural-zero reduction. This is an ExoGibbs backend-parity issue. The
-generic provider-side remedy is to reconstruct the initial potential on the
-retained full-rank rows after structural-zero reduction; ExoExamples must not
-hide it with a case-specific fallback.
+triggered by a backend-scale difference in the initial element potential. On
+CUDA, the inventory-bridge midpoint nevertheless finds and certifies
+`Mg(OH)2(s)` support, but the target retry retains only the gas warm start and
+discards that support. Replaying the target with the certified support as an
+initializer succeeds. The minimal generic ExoGibbs remedy is therefore to
+carry certified bridge support into the target retry within the target
+capacity, while leaving the final target KKT and physical audits authoritative.
+ExoExamples must not hide this provider issue with a case-specific fallback.
 
 Temperature errors use a 512-point uniform shared-log-pressure grid with
 piecewise-linear interpolation in `log10(P)`. The maximum is sampled on that
