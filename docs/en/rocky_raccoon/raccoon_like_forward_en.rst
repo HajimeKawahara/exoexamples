@@ -1,6 +1,8 @@
 Rocky Raccoon-like deep-envelope column
 ========================================
 
+`Japanese master edition <../../ja/rocky_raccoon/raccoon_like_forward_ja.html>`__
+
 Purpose and claim boundary
 --------------------------
 

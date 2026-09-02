@@ -4,8 +4,8 @@ ExoExamples English documentation
 Documentation for cross-platform examples connecting ExoJAX, ExoGibbs,
 ExoEOS, and external packages.
 
-The MELTYQ pages also have a `Japanese master edition <../ja/index.html>`__.
-The current Rocky Raccoon-like implementation note is English-only.
+The `Japanese master edition <../ja/index.html>`__ includes both the MELTYQ
+and Rocky Raccoon-like pages.
 
 .. toctree::
    :maxdepth: 2

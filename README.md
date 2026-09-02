@@ -47,9 +47,11 @@ reproduction or a pressure-grid-convergence claim. The ordinary suite reports
 ExoExamples does not propagate condensate support or skip a failed thermal
 candidate; it fails closed and records every attempt in `run_status.json`.
 
-See the [implementation documentation](docs/en/rocky_raccoon/raccoon_like_forward_en.rst)
-for the chemistry contract, branch transaction, assumptions, outputs, tests,
-and the current ExoGibbs regression status.
+See the implementation documentation in
+[Japanese](docs/ja/rocky_raccoon/raccoon_like_forward_ja.rst) or
+[English](docs/en/rocky_raccoon/raccoon_like_forward_en.rst) for the chemistry
+contract, branch transaction, assumptions, outputs, tests, and the current
+ExoGibbs regression status.
 
 ## MELTYQ-like clear forward model
 
