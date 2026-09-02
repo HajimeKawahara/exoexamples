@@ -1,14 +1,15 @@
 # ExoExamples documentation
 
-The Japanese master and English translation are independent Sphinx source
-trees:
+The Japanese master and English translation for MELTYQ are independent Sphinx
+source trees:
 
 - `ja/`: Japanese master
 - `en/`: English translation
 
 Both trees render the checked-in RST and figure assets generated from the
-executed notebooks. Building the documentation does not execute the notebooks
-or run the forward model.
+executed notebooks. The current Rocky Raccoon-like implementation note is
+English-only under `en/rocky_raccoon/`. Building the documentation does not
+execute notebooks or run a forward model.
 
 The provisional Figure 3 comparison is also reproducible without ignored
 runtime outputs. Its checked-in model spectrum and matching forward metadata

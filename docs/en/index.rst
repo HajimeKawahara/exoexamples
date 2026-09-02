@@ -4,7 +4,8 @@ ExoExamples English documentation
 Documentation for cross-platform examples connecting ExoJAX, ExoGibbs,
 ExoEOS, and external packages.
 
-`Japanese master edition <../ja/index.html>`__
+The MELTYQ pages also have a `Japanese master edition <../ja/index.html>`__.
+The current Rocky Raccoon-like implementation note is English-only.
 
 .. toctree::
    :maxdepth: 2
@@ -12,9 +13,10 @@ ExoEOS, and external packages.
 
    meltyq/meltyq_figure8_forward_comparison_en
    meltyq/meltyq_figure3_forward_preparation_en
+   rocky_raccoon/raccoon_like_forward_en
 
-Downloadable artifacts
-----------------------
+MELTYQ downloadable artifacts
+------------------------------
 
 The MELTYQ Figure 8 forward-comparison page is built by Sphinx from the RST
 generated from the executed notebook.

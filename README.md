@@ -4,6 +4,53 @@ Cross-package workflows for the ExoJAX, ExoGibbs, ExoEOS, and external packages.
 
 - non-installable
 
+## Rocky Raccoon-like deep-envelope column
+
+`examples/rocky_raccoon/raccoon_like_forward.py` couples an exact 70-gas
+Appendix network in ExoGibbs to ExoEOS ideal-mixture states and a local
+two-candidate structure integrator. It is explicitly a Rocky Raccoon-like
+model, not a reproduction of Misener et al. (2026). Neutral atomic reference
+gases and a free-electron gas are not appended; `e-` is a zero-inventory
+charge-constraint row.
+
+Inspect the configured providers without solving a column:
+
+```console
+JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/raccoon_like_forward.py --check-inputs
+```
+
+Run the verified coarse three-level coupling smoke test:
+
+```console
+JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/raccoon_like_forward.py \
+  --pressure-top-bar 1.5e5 --transit-pressure-bar 1.6e5 --pressure-ratio 0.8 \
+  --output-dir outputs/rocky_raccoon_2026/raccoon_like_forward_smoke
+```
+
+The 0.8 pressure ratio is for runtime validation only. The default 0.99 grid
+must be used with a convergence study for scientific results. Each trial gets
+an independent gas-only numerical hint and source-problem provenance from the
+accepted parent; condensate support and rainout inventory are never shared
+between competing branches.
+
+The authoritative CUDA default-grid run is complete under
+`outputs/rocky_raccoon_2026/raccoon_like_forward_empty_support_rescue_gpu`.
+All 1,903 accepted layers converged: one base, 1,879 convective, and 23
+non-convective. The route counts are 1,462 lifecycle and 441 gas-only layers,
+with 14 support changes. The column reached
+`P = 0.000998090955700085 bar` and `T = 15.330699918575274 K`; its transit and
+outer-RCB radii are `1.9066419361104325` and `1.4805555213405799` Earth radii.
+This is a raccoon-like single-grid implementation result, not a paper
+reproduction or a pressure-grid-convergence claim. The ordinary suite reports
+53 passed and 21 skipped; the opt-in file contains one three-layer check and
+20 exact one-layer regressions, including step 1383 with support `(5,)`.
+ExoExamples does not propagate condensate support or skip a failed thermal
+candidate; it fails closed and records every attempt in `run_status.json`.
+
+See the [implementation documentation](docs/en/rocky_raccoon/raccoon_like_forward_en.rst)
+for the chemistry contract, branch transaction, assumptions, outputs, tests,
+and the current ExoGibbs regression status.
+
 ## MELTYQ-like clear forward model
 
 `examples/meltyq/meltyq_clear_forward.py` connects a magma--gas boundary, a
