@@ -217,7 +217,8 @@ Successful runs write:
    ``hydrogen_mass_fraction`` stored in the CSV.
 
 ``profile.png``
-   Temperature, radius, and density against pressure.
+   Temperature, radius, and density against pressure.  This is a model-run
+   diagnostic and is not a comparison with a published figure.
 
 ``run_status.json``
    The status of the latest attempt.  It is written as ``running`` before the
@@ -516,17 +517,176 @@ convective, 23 non-convective, and one base layer; its route counts are 1,462
 lifecycle and 441 gas-only layers, with 14 condensate-support changes.  It
 reached :math:`P=0.000998090955700085` bar and
 :math:`T=15.330699918575274` K.  The transit radius is
-:math:`1.9066419361104325\,R_\oplus` and the outer-RCB radius is
-:math:`1.4805555213405799\,R_\oplus`.  These are raccoon-like fixed-grid
-outputs, not reproduced paper radii or a pressure-grid-convergence claim.
+:math:`1.9066419361104325\,R_\oplus`.  The previously reported
+:math:`1.4805555213405799\,R_\oplus` boundary is a detached
+convective-to-non-convective transition: the saved profile becomes convective
+again above it.  It is retained only as a legacy transition diagnostic and is
+not the paper-analog outer RCB.  Because this column does not end in a
+top-connected non-convective region, its paper-analog outer RCB is
+unavailable.  These are raccoon-like fixed-grid outputs, not reproduced paper
+radii or a pressure-grid-convergence claim.
 
 .. image:: raccoon_like_forward_en_files/raccoon_like_forward_cuda_profile.png
    :alt: Pressure, temperature, and radius profiles from the authoritative raccoon-like CUDA run
    :width: 100%
    :align: center
 
-*Profiles from the authoritative CUDA fixed-grid run.  These are raccoon-like
-implementation outputs, not a reproduction of a paper figure.*
+*Profiles from the authoritative CUDA fixed-grid run.  This image is an
+internal model diagnostic, not a comparison with or reproduction of a paper
+figure.*
+
+Paper-facing Figure 2 and Figure 5 comparison
+----------------------------------------------
+
+``paper_comparison.py`` is a standalone postprocessor for completed forward
+runs.  It does not solve chemistry or structure again.  It requires every
+input directory to contain a completed ``run_status.json`` and rejects a
+running or failed column instead of plotting a partial profile.
+
+The Figure 2 comparison can be generated from the completed oxygen-poor run
+with:
+
+.. code-block:: console
+
+   JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 \
+     python examples/rocky_raccoon/paper_comparison.py \
+       --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+       --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure2
+
+The oxygen-rich Figure 2 run is not included in that command.  Its current
+full-column attempt stopped at an ExoGibbs provider failure near
+:math:`0.0919` bar, so it has no completed profile that the postprocessor may
+accept.  This is a visible provider blocker, not an interpolated gap or a
+successful oxygen-rich comparison.
+
+Generate the completed Figure 5 SiO(s)-off/on sensitivity comparison with:
+
+.. code-block:: console
+
+   JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 \
+     python examples/rocky_raccoon/paper_comparison.py \
+       --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+       --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_sio_gpu \
+       --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure5
+
+Each output directory contains ``paper_comparison.png`` and
+``paper_comparison.json``.  The JSON records the case identity, source
+provenance, comparison contract, radius availability, temperature residuals,
+and the condensate amount-gauge audit.
+
+.. list-table:: Execution boundary for the paper-facing comparisons
+   :header-rows: 1
+   :widths: 16 25 26 33
+
+   * - Paper panel
+     - ExoExamples case
+     - Completed-profile status
+     - Interpretation
+   * - Figure 2 left / Figure 5 left
+     - ``oxygen_poor``; Mg:Si:O = 1:1:3, SiO(s) off
+     - Completed and eligible for postprocessing
+     - Fixed-boundary raccoon-like curve
+   * - Figure 2 right
+     - ``oxygen_rich``; Mg:Si:O = 1:1:4
+     - Provider failure near :math:`0.0919` bar
+     - No completed comparison curve
+   * - Figure 5 right
+     - ``oxygen_poor_sio``; Mg:Si:O = 1:1:3, SiO(s) on
+     - Completed and eligible for postprocessing
+     - SiO(s) support sensitivity, not a shooting solution
+
+.. list-table:: Executed comparison metrics
+   :header-rows: 1
+   :widths: 19 22 23 17 19
+
+   * - Case
+     - :math:`R_t` model / paper
+     - :math:`T(P)` RMSE / MAE / sampled maximum absolute error
+     - :math:`f_\mathrm{H}` model / paper
+     - Outer RCB model / paper
+   * - oxygen-poor, SiO(s) off
+     - :math:`1.90664194 / 2.51\,R_\oplus` (:math:`-24.0382\%`)
+     - :math:`714.8793 / 629.2752 / 984.6299` K
+     - :math:`0.03934380 / 0.03`
+     - unavailable / :math:`1.63\,R_\oplus`; detached legacy transition
+       :math:`1.48056\,R_\oplus`
+   * - oxygen-rich
+     - unavailable
+     - unavailable
+     - unavailable
+     - unavailable; the column failed before completion
+   * - oxygen-poor, SiO(s) on
+     - :math:`1.87389604 / 2.28\,R_\oplus` (:math:`-17.8116\%`)
+     - :math:`709.9582 / 620.6185 / 983.9805` K
+     - :math:`0.03954282 / 0.03`
+     - unavailable / :math:`1.63\,R_\oplus`; detached legacy transition
+       :math:`1.44802\,R_\oplus`
+
+The temperature metrics use 512 uniformly spaced points in shared
+:math:`\log_{10}P` coverage and piecewise-linear interpolation in
+:math:`\log_{10}P`.  ``sampled maximum`` refers to that comparison grid, not a
+continuous global maximum.  Both completed model profiles are convective at
+the top, which is why neither supplies a paper-analog outer RCB.
+
+Within the same fixed-boundary closure, enabling SiO(s) changes the model
+transit radius by :math:`-0.0327459\,R_\oplus` (:math:`-1.72\%` relative to
+the off case).  The corresponding published targets change by
+:math:`-0.23\,R_\oplus` (:math:`-9.16\%`), so the absolute model sensitivity
+is about :math:`14.2\%` of the published sensitivity.  This comparison
+quantifies the present fixed-boundary response; it is not a reproduction
+score.
+
+.. image:: raccoon_like_forward_en_files/raccoon_like_figure2_comparison.png
+   :alt: Rocky Raccoon-like oxygen-poor Figure 2 comparison with the published temperature trace
+   :width: 100%
+   :align: center
+
+*Figure 2 comparison.  Solid gas, condensate, and temperature curves are
+ExoExamples outputs.  The dashed temperature curve is measured from the
+published PDF vector artwork.  The unavailable oxygen-rich column is not
+silently replaced.*
+
+.. image:: raccoon_like_forward_en_files/raccoon_like_figure5_comparison.png
+   :alt: Rocky Raccoon-like Figure 5 SiO(s) off and on comparison with published temperature traces
+   :width: 100%
+   :align: center
+
+*Figure 5 SiO(s) sensitivity comparison.  It compares completed fixed-boundary
+model columns; it is not the paper's shooting solution.*
+
+What is and is not compared
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The solid gas and condensate curves are ExoExamples results only.  Gas mixing
+ratios are normalized by the sum over the explicit solver gas species.  The
+paper also displays neutral atomic curves, including atomic H, that are not
+explicit species in this ExoGibbs network.  The PDF does not provide a
+reliable machine-readable species binding for all fragmented gas and
+condensate paths.  Consequently those published composition curves are not
+overlaid, and the model composition panels must not be interpreted as a
+like-for-like residual comparison.  Condensate number densities are converted
+from the ExoGibbs amount gauge by an ExoExamples reconstruction whose element
+closure is audited and recorded in ``paper_comparison.json``.
+
+Only the published temperature curves are shown as dashed references.  They
+are vector coordinates extracted from pages 8 and 11 of the paper PDF, not an
+author-provided numerical table.  The checked-in
+:download:`temperature reference CSV
+<../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.csv>` and
+:download:`provenance JSON
+<../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.json>`
+record the extraction contract, paper hash, cases, and row counts.  The
+extractor preserves separate thick convective and thin non-convective vector
+paths and does not interpolate extra published points.  These traces support
+visual and shape comparisons, not a likelihood calculation.
+
+Finally, the model fixes :math:`P_\mathrm{base}` and luminosity :math:`L`.
+The paper instead solves for those quantities by shooting to hydrogen envelope
+mass fraction :math:`f=0.03` and equilibrium temperature
+:math:`T_\mathrm{eq}=1000` K.  The paper's absolute elemental abundances and
+numerical transport tables are also unavailable.  Radius and temperature
+differences therefore measure the present fixed-boundary model mismatch as a
+whole; they do not isolate chemistry accuracy and are not reproduction errors.
 
 Tests and deferred work
 -----------------------
@@ -557,7 +717,9 @@ post-bridge states at steps 1075, 1076, 1077, 1084, 1186, 1342, 1372, and
 failure.
 
 The default fixed-boundary implementation is verified by the completed run
-above, but pressure-grid convergence remains unverified.  Shooting for envelope
-mass and outer temperature, full paper figures, non-ideal EOS/fugacity,
+above, but pressure-grid convergence remains unverified.  The paper-facing
+figures above are diagnostic comparisons of available saved columns, not full
+paper reproductions.  Shooting for envelope mass and outer temperature,
+like-for-like published composition curves, non-ideal EOS/fugacity,
 magma--gas equilibrium, the exact 10-bar ExoJAX stitch, spectra, and retrieval
 remain deferred pending a documented grid-convergence study.

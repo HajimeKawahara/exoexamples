@@ -13,9 +13,12 @@ one-layer provider regressions to default-column validation.
 ## Scope decision
 
 The current objective is a Rocky Raccoon-like calculation using ExoFamily
-providers, not recovery of Figures 1, 2, or 5 or their published radii. The
-first milestone covers the deep atmospheric column above a prescribed basal
-element composition.
+providers, not recovery of the unpublished numerical solutions behind Figures
+1, 2, or 5. The first milestone covers the deep atmospheric column above a
+prescribed basal element composition. A paper-facing postprocessor now renders
+completed model columns on the Figure 2/5 axes and compares their temperature
+profiles and published scalar targets. This is an explicit diagnostic
+comparison, not a change to the reproduction claim.
 
 No new ExoStructure package is introduced. The coupler belongs in ExoExamples
 until self-gravity, `dm/dr`, entropy/time evolution, or core EOS machinery is
@@ -103,9 +106,13 @@ Rocky Raccoon test directory currently reports 53 passed and 21 skipped.
 The authoritative run accepted 1,903 layers, all converged: one base, 1,879
 convective, and 23 non-convective. It used 1,462 lifecycle and 441 gas-only
 routes and changed condensate support 14 times. The top state is
-`P = 0.000998090955700085 bar`, `T = 15.330699918575274 K`; the transit and
-outer-RCB radii are `1.9066419361104325` and `1.4805555213405799` Earth radii.
-The artifacts are under
+`P = 0.000998090955700085 bar`, `T = 15.330699918575274 K`; the transit
+radius is `1.9066419361104325` Earth radii. The previously reported
+`1.4805555213405799` Earth-radii boundary is a detached
+convective-to-non-convective transition: the column becomes convective again
+above it. It is a legacy transition diagnostic, not the outer boundary of a
+top-connected non-convective region. The paper-analog outer RCB is unavailable
+for this column. The artifacts are under
 `outputs/rocky_raccoon_2026/raccoon_like_forward_empty_support_rescue_gpu`.
 These are raccoon-like single-grid outputs, not reproduced paper values.
 
@@ -126,6 +133,91 @@ An optional `--accepted-layer-snapshot PATH` writes the latest committed layer
 as an atomic, fully named NPZ. It retains exact gas log amounts and both
 inventory vectors after a later candidate failure. It is diagnostic evidence,
 not a restart file, and never supersedes `run_status.json`.
+
+## Paper-facing comparison contract
+
+`examples/rocky_raccoon/paper_comparison.py` is a read-only postprocessor for
+saved forward columns. It checks `run_status.json`, the claim status, preset,
+species order, output columns, and source provenance before plotting. A failed
+or running directory is rejected; a partial oxygen-rich profile cannot be
+presented as a completed Figure 2 result.
+
+Generate the currently available Figure 2 comparison with:
+
+```console
+JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/paper_comparison.py \
+  --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+  --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure2
+```
+
+Generate the completed Figure 5 SiO(s)-off/on comparison with:
+
+```console
+JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/paper_comparison.py \
+  --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+  --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_sio_gpu \
+  --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure5
+```
+
+The postprocessor writes `paper_comparison.png` and
+`paper_comparison.json`. Its plotted quantities have deliberately different
+reference contracts:
+
+- Gas mixing ratios and condensate number densities are ExoExamples outputs
+  only. Gas fractions are normalized over the explicit solver species. The
+  paper includes neutral atomic curves, including H, that are absent from this
+  explicit ExoGibbs network. The PDF also does not give a reliable
+  machine-readable species binding for every fragmented gas and condensate
+  path, so no published composition overlay or residual is claimed.
+- Condensate amounts are converted to number density through an
+  ExoExamples-owned amount-gauge reconstruction. Its full element closure is
+  audited and stored in the comparison JSON.
+- Dashed temperature curves are coordinates extracted from the paper PDF's
+  vector artwork. The checked-in
+  `docs/rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.csv` and
+  companion JSON preserve the PDF hash, extraction contract, case identity,
+  path regime, and row counts. They are not an author-provided data table and
+  support visual/shape comparisons rather than likelihood evaluation.
+- The 20-mbar transit radius is compared with the scalar stated in the paper.
+  An outer RCB is compared only when the saved profile ends in a top-connected
+  non-convective region. Detached internal transitions are not relabeled as
+  the paper RCB.
+
+The fixed-boundary calculation prescribes `pressure_base_bar` and
+`luminosity_w`. The paper instead shoots those two quantities to its hydrogen
+envelope mass fraction `f = 0.03` and equilibrium temperature
+`Teq = 1000 K`. Its absolute elemental abundances and numerical opacity and
+conductivity tables are also unavailable. Therefore profile and radius
+differences describe the mismatch of the complete present closure; they are
+not paper-reproduction errors or isolated chemistry errors.
+
+The current execution boundary is explicit:
+
+| Panel | Case | Status | `Rt` model / paper | T(P) RMSE / MAE / sampled max [K] | `fH` model / paper | Outer RCB model / paper |
+| --- | --- | --- | --- | --- | --- | --- |
+| Figure 2 left / Figure 5 left | `oxygen_poor` | Completed | `1.90664194 / 2.51 Rearth` (`-24.0382%`) | `714.8793 / 629.2752 / 984.6299` | `0.03934380 / 0.03` | unavailable / `1.63 Rearth`; detached legacy transition `1.48056 Rearth` |
+| Figure 2 right | `oxygen_rich` | ExoGibbs provider failure near `0.0919 bar` | unavailable | unavailable | unavailable | unavailable |
+| Figure 5 right | `oxygen_poor_sio` | Completed | `1.87389604 / 2.28 Rearth` (`-17.8116%`) | `709.9582 / 620.6185 / 983.9805` | `0.03954282 / 0.03` | unavailable / `1.63 Rearth`; detached legacy transition `1.44802 Rearth` |
+
+Direct replay of the oxygen-rich failure state succeeds on CPU with
+`Mg(OH)2(s)` support but fails on CUDA with empty support. The divergence is
+localized to the initial element potential: the six-row capacity fit has rank
+five and preserves a backend-dependent null-space component before the
+structural-zero reduction. This is an ExoGibbs backend-parity issue. The
+generic provider-side remedy is to reconstruct the initial potential on the
+retained full-rank rows after structural-zero reduction; ExoExamples must not
+hide it with a case-specific fallback.
+
+Temperature errors use a 512-point uniform shared-log-pressure grid with
+piecewise-linear interpolation in `log10(P)`. The maximum is sampled on that
+grid, not a continuous global maximum. Both completed columns are convective
+at the top and therefore have no paper-analog outer RCB.
+
+Within this fixed-boundary closure, enabling SiO(s) changes the model transit
+radius by `-0.0327459 Rearth` (`-1.72%` relative to the off case). The
+published targets change by `-0.23 Rearth` (`-9.16%`), so the model's absolute
+sensitivity is about `14.2%` of the published sensitivity. This is a closure
+response diagnostic, not a reproduction score.
 
 ## Resolved ExoGibbs provider regressions
 

@@ -282,3 +282,14 @@ FIGURE_5_CASES = (
 )
 
 PAPER_FIGURE_CASES = FIGURE_1_CASES + FIGURE_2_CASES + FIGURE_5_CASES
+
+
+def paper_case_by_identifier(identifier: str) -> PaperFigureCase:
+    """Return one paper case while rejecting unknown or duplicate identifiers."""
+
+    matches = tuple(
+        case for case in PAPER_FIGURE_CASES if case.identifier == identifier
+    )
+    if len(matches) != 1:
+        raise ValueError(f"Unknown or duplicate paper-policy case {identifier!r}.")
+    return matches[0]

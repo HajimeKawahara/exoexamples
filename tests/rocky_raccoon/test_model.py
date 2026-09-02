@@ -138,6 +138,38 @@ def test_radius_and_outer_rcb_diagnostics_use_accepted_layers():
     assert outer_rcb_radius_m(profile) == pytest.approx(4.0)
 
 
+def test_detached_nonconvective_region_is_not_an_outer_rcb():
+    inventory = np.asarray([1.0])
+    chemistry = ChemistryState(2.0e-3, inventory)
+    inputs = StructureInputs(
+        pressure_base_bar=100.0,
+        pressure_top_bar=0.1,
+        temperature_base_k=1000.0,
+        radius_base_m=1.0,
+        planet_mass_kg=1.0,
+        luminosity_w=1.0,
+        element_inventory=inventory,
+    )
+    layers = tuple(
+        LayerState(
+            pressure_bar=pressure,
+            temperature_k=1000.0,
+            radius_m=radius,
+            mass_density_kg_m3=1.0,
+            chemistry=chemistry,
+            transport=transport,
+        )
+        for pressure, radius, transport in (
+            (100.0, 1.0, "base"),
+            (10.0, 2.0, "convective"),
+            (1.0, 3.0, "nonconvective"),
+            (0.1, 4.0, "convective"),
+        )
+    )
+
+    assert outer_rcb_radius_m(StructureProfile(inputs, layers, ())) is None
+
+
 def test_equilibrium_callback_preserves_the_previous_transition(
     monkeypatch,
     oxygen_poor_context,

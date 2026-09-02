@@ -38,14 +38,57 @@ The authoritative CUDA default-grid run is complete under
 All 1,903 accepted layers converged: one base, 1,879 convective, and 23
 non-convective. The route counts are 1,462 lifecycle and 441 gas-only layers,
 with 14 support changes. The column reached
-`P = 0.000998090955700085 bar` and `T = 15.330699918575274 K`; its transit and
-outer-RCB radii are `1.9066419361104325` and `1.4805555213405799` Earth radii.
-This is a raccoon-like single-grid implementation result, not a paper
-reproduction or a pressure-grid-convergence claim. The ordinary suite reports
-53 passed and 21 skipped; the opt-in file contains one three-layer check and
-20 exact one-layer regressions, including step 1383 with support `(5,)`.
-ExoExamples does not propagate condensate support or skip a failed thermal
-candidate; it fails closed and records every attempt in `run_status.json`.
+`P = 0.000998090955700085 bar` and `T = 15.330699918575274 K`; its transit
+radius is `1.9066419361104325` Earth radii. The previously reported
+`1.4805555213405799` Earth-radii boundary is a detached
+convective-to-non-convective transition, not the paper-analog outer RCB: the
+saved column becomes convective again above it. A paper-analog outer RCB is
+therefore unavailable for this run. This is a raccoon-like single-grid
+implementation result, not a paper reproduction or a
+pressure-grid-convergence claim. The ordinary suite reports 53 passed and 21
+skipped; the opt-in file contains one three-layer check and 20 exact one-layer
+regressions, including step 1383 with support `(5,)`. ExoExamples does not
+propagate condensate support or skip a failed thermal candidate; it fails
+closed and records every attempt in `run_status.json`.
+
+A standalone postprocessor renders completed saved columns on the Figure 2/5
+axes and compares their temperature profiles with vector traces extracted
+from the paper PDF:
+
+```console
+JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/paper_comparison.py \
+  --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+  --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure2
+```
+
+The completed Figure 5 SiO(s)-off/on comparison adds the second run directory:
+
+```console
+JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 python examples/rocky_raccoon/paper_comparison.py \
+  --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+  --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_sio_gpu \
+  --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure5
+```
+
+The command rejects a failed or incomplete `run_status.json`; in particular,
+the current oxygen-rich Figure 2 attempt stopped at a provider failure near `0.0919 bar`
+and is not presented as a completed curve. The gas and condensate panels show
+ExoExamples outputs only. Gas mixing ratios are normalized over the explicit
+solver species, while neutral atomic curves shown by the paper are not
+available for a like-for-like overlay. The dashed paper temperature curves
+come from the checked-in PDF-vector-extraction CSV, not an author data table.
+The comparison remains fixed-`Pbase`/`L` versus the paper's `f`/`Teq` shooting
+solution and is therefore a diagnostic comparison, not a reproduction.
+For the completed oxygen-poor SiO(s)-off/on columns, the 20-mbar radii are
+`1.90664194/1.87389604 Rearth` versus the paper's `2.51/2.28 Rearth`, and the
+vector-temperature RMSE values are `714.8793/709.9582 K`. Both model tops are
+convective, so neither has a paper-analog outer RCB; `1.48056/1.44802 Rearth`
+are detached legacy transitions, not RCB measurements.
+Within the same fixed-boundary closure, enabling SiO(s) changes the model
+transit radius by `-0.0327459 Rearth` (`-1.72%`), versus `-0.23 Rearth`
+(`-9.16%`) between the published targets. The model's absolute SiO(s)
+sensitivity is therefore about `14.2%` of the published one, as a diagnostic
+comparison rather than a reproduction metric.
 
 See the implementation documentation in
 [Japanese](docs/ja/rocky_raccoon/raccoon_like_forward_ja.rst) or

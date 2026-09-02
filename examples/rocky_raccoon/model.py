@@ -19,8 +19,8 @@ from .chemistry import (
 )
 from .paper import (
     PAPER_GAS_SPECIES,
-    PAPER_FIGURE_CASES,
     PaperFigureCase,
+    paper_case_by_identifier,
     paper_gamma,
 )
 from .physics import (
@@ -119,19 +119,12 @@ class RaccoonLikeResult:
     metrics: ColumnMetrics
 
 
-def _case_by_identifier(identifier: str) -> PaperFigureCase:
-    matches = tuple(case for case in PAPER_FIGURE_CASES if case.identifier == identifier)
-    if len(matches) != 1:
-        raise ValueError(f"Unknown or duplicate paper-policy case {identifier!r}.")
-    return matches[0]
-
-
 def preset_composition(preset: PresetName) -> RaccoonLikeComposition:
     """Return the default basal composition implied by one named preset."""
 
     if preset not in PRESET_CASE_IDENTIFIERS:
         raise ValueError(f"Unknown raccoon-like preset {preset!r}.")
-    case = _case_by_identifier(PRESET_CASE_IDENTIFIERS[preset])
+    case = paper_case_by_identifier(PRESET_CASE_IDENTIFIERS[preset])
     prescribed_ratio = dict(case.prescribed_number_ratio)
     silicon_ratio = float(prescribed_ratio["Si"])
     defaults = RaccoonLikeComposition()
@@ -210,7 +203,7 @@ def build_context(config: RaccoonLikeConfig = RaccoonLikeConfig()) -> RaccoonLik
     """Build static ExoGibbs and ExoEOS providers for one run family."""
 
     _validate_config(config)
-    case = _case_by_identifier(PRESET_CASE_IDENTIFIERS[config.preset])
+    case = paper_case_by_identifier(PRESET_CASE_IDENTIFIERS[config.preset])
     source = load_ion_inclusive_fastchem4_setup()
     chemistry_setup = subset_condensate_chemical_setup(
         source,
@@ -429,7 +422,10 @@ def radius_at_pressure(profile: StructureProfile, pressure_bar: float) -> float:
 
 
 def outer_rcb_radius_m(profile: StructureProfile) -> float | None:
-    """Return the outermost accepted convective-to-nonconvective boundary."""
+    """Return the boundary below the top-connected non-convective region."""
+
+    if profile.layers[-1].transport != "nonconvective":
+        return None
 
     transitions = [
         index

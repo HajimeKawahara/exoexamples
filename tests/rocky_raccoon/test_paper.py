@@ -98,6 +98,14 @@ def test_figure_cases_record_published_radius_targets():
     assert paper.FIGURE_1_CASES[-1].radius_targets.transit_text_rearth == 2.34
 
 
+def test_paper_case_lookup_is_canonical_and_rejects_unknown_identifiers():
+    case = paper.paper_case_by_identifier("figure2_mg_si_o_1_1_3")
+
+    assert case is paper.FIGURE_2_CASES[0]
+    with pytest.raises(ValueError, match="Unknown or duplicate"):
+        paper.paper_case_by_identifier("not_a_paper_case")
+
+
 def test_paper_gamma_policy_and_common_inputs_are_explicit():
     assert paper.paper_gamma("H4Si1") == pytest.approx(1.3)
     assert paper.paper_gamma("H2O1") == pytest.approx(4.0 / 3.0)

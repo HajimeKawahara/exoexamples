@@ -204,7 +204,8 @@ paper-radius benchmarkではない。scientific calculationではdefaultの
    CSVの各layerにあるgas ``hydrogen_mass_fraction`` ではない。
 
 ``profile.png``
-   pressureに対するtemperature、radius、densityを保存する。
+   pressureに対するtemperature、radius、densityを保存する。これはmodel run内部の
+   diagnosticであり、論文figureとの比較ではない。
 
 ``run_status.json``
    最新attemptのstatusを保存する。solve前に ``running``、終了時に ``completed`` または
@@ -460,17 +461,163 @@ authoritative CUDA runは1,903 layerを採択し、すべて収束した。trans
 convective、23 non-convective、1 base layer、route countは1,462 lifecycleと441 gas-only、
 condensate-support changeは14回である。到達点は
 :math:`P=0.000998090955700085` bar、:math:`T=15.330699918575274` Kである。transit
-radiusは :math:`1.9066419361104325\,R_\oplus`、outer-RCB radiusは
-:math:`1.4805555213405799\,R_\oplus` である。これらはraccoon-like fixed-grid outputであり、
-論文radiusの再現でもpressure-grid-convergenceの主張でもない。
+radiusは :math:`1.9066419361104325\,R_\oplus` である。以前outer RCBとして報告した
+:math:`1.4805555213405799\,R_\oplus` の境界は、detachedな
+convective-to-non-convective transitionである。その上でprofileは再びconvectiveになるため、
+この値はlegacy transition diagnosticとしてのみ保持し、論文に対応するouter RCBとは
+みなさない。このcolumnにはtop-connectedなnon-convective regionがないので、paper-analogな
+outer RCBは得られない。これらはraccoon-like fixed-grid outputであり、論文radiusの再現でも
+pressure-grid-convergenceの主張でもない。
 
 .. image:: raccoon_like_forward_ja_files/raccoon_like_forward_cuda_profile.png
    :alt: authoritative raccoon-like CUDA runのpressure, temperature, radius profile
    :width: 100%
    :align: center
 
-*authoritative CUDA fixed-grid runのprofile。raccoon-like implementation outputであり、
-論文figureの再現ではない。*
+*authoritative CUDA fixed-grid runのprofile。この画像はmodel内部のdiagnosticであり、
+論文figureとの比較でも再現でもない。*
+
+論文Figure 2およびFigure 5との比較
+----------------------------------
+
+``paper_comparison.py`` はcompleted forward runを読むstandalone postprocessorである。
+chemistryやstructureを再計算しない。各input directoryの ``run_status.json`` が
+``completed`` であることを要求し、runningまたはfailedなcolumnをpartial profileとして
+表示することを拒否する。
+
+completedなoxygen-poor runからFigure 2 comparisonを生成するcommandは次である。
+
+.. code-block:: console
+
+   JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 \
+     python examples/rocky_raccoon/paper_comparison.py \
+       --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+       --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure2
+
+このcommandにはFigure 2のoxygen-rich runを含めない。現在のfull-column attemptは
+:math:`0.0919` bar付近でExoGibbs provider failureにより停止し、postprocessorが採択できる
+completed profileを持たない。これは明示的なprovider blockerであり、gapの補間でも
+oxygen-rich comparisonの成功でもない。
+
+completedしたSiO(s)-off/onのFigure 5 sensitivity comparisonを次で生成する。
+
+.. code-block:: console
+
+   JAX_PLATFORMS=cpu JAX_ENABLE_X64=1 \
+     python examples/rocky_raccoon/paper_comparison.py \
+       --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_gpu \
+       --run-directory outputs/rocky_raccoon_2026/comparison_oxygen_poor_sio_gpu \
+       --output-directory outputs/rocky_raccoon_2026/paper_comparison_figure5
+
+各output directoryには ``paper_comparison.png`` と ``paper_comparison.json`` を保存する。
+JSONにはcase identity、source provenance、comparison contract、radius availability、
+temperature residual、condensate amount-gauge auditを記録する。
+
+.. list-table:: 論文比較を実行する範囲
+   :header-rows: 1
+   :widths: 16 25 26 33
+
+   * - 論文panel
+     - ExoExamples case
+     - completed-profile status
+     - 解釈
+   * - Figure 2 left / Figure 5 left
+     - ``oxygen_poor``; Mg:Si:O = 1:1:3、SiO(s) off
+     - completedでpostprocess可能
+     - fixed-boundary raccoon-like curve
+   * - Figure 2 right
+     - ``oxygen_rich``; Mg:Si:O = 1:1:4
+     - :math:`0.0919` bar付近でprovider failure
+     - completed comparison curveなし
+   * - Figure 5 right
+     - ``oxygen_poor_sio``; Mg:Si:O = 1:1:3、SiO(s) on
+     - completedでpostprocess可能
+     - shooting solutionではなくSiO(s) support sensitivity
+
+.. list-table:: 実行済みcomparison metric
+   :header-rows: 1
+   :widths: 19 22 23 17 19
+
+   * - case
+     - :math:`R_t` model / paper
+     - :math:`T(P)` RMSE / MAE / sampled maximum absolute error
+     - :math:`f_\mathrm{H}` model / paper
+     - outer RCB model / paper
+   * - oxygen-poor、SiO(s) off
+     - :math:`1.90664194 / 2.51\,R_\oplus` (:math:`-24.0382\%`)
+     - :math:`714.8793 / 629.2752 / 984.6299` K
+     - :math:`0.03934380 / 0.03`
+     - unavailable / :math:`1.63\,R_\oplus`; detachedなlegacy transitionは
+       :math:`1.48056\,R_\oplus`
+   * - oxygen-rich
+     - unavailable
+     - unavailable
+     - unavailable
+     - unavailable; column完了前にfailure
+   * - oxygen-poor、SiO(s) on
+     - :math:`1.87389604 / 2.28\,R_\oplus` (:math:`-17.8116\%`)
+     - :math:`709.9582 / 620.6185 / 983.9805` K
+     - :math:`0.03954282 / 0.03`
+     - unavailable / :math:`1.63\,R_\oplus`; detachedなlegacy transitionは
+       :math:`1.44802\,R_\oplus`
+
+temperature metricは、modelとreferenceが共通に持つ :math:`\log_{10}P` 範囲に512点を
+等間隔で置き、:math:`\log_{10}P` に対するpiecewise-linear interpolationを用いて計算した。
+``sampled maximum`` はこのcomparison grid上の値で、continuous global maximumではない。
+completedした二つのmodel profileはともにtopがconvectiveなので、paper-analog outer RCBを
+与えない。
+
+同じfixed-boundary closure内でSiO(s)を有効にすると、model transit radiusは
+:math:`-0.0327459\,R_\oplus`（off case比 :math:`-1.72\%`）変化する。対応する公開targetの
+変化は :math:`-0.23\,R_\oplus`（:math:`-9.16\%`）なので、modelのabsolute sensitivityは
+公開sensitivityの約 :math:`14.2\%` である。これは現在のfixed-boundary responseを定量化する
+diagnosticであり、reproduction scoreではない。
+
+.. image:: raccoon_like_forward_ja_files/raccoon_like_figure2_comparison.png
+   :alt: Rocky Raccoon-like oxygen-poor Figure 2 comparisonと論文temperature trace
+   :width: 100%
+   :align: center
+
+*Figure 2 comparison。solidなgas、condensate、temperature curveはExoExamples outputである。
+dashed temperature curveは論文PDFのvector artworkから測定した。利用できないoxygen-rich
+columnを暗黙に置き換えていない。*
+
+.. image:: raccoon_like_forward_ja_files/raccoon_like_figure5_comparison.png
+   :alt: Rocky Raccoon-like Figure 5 SiO(s) off/on comparisonと論文temperature trace
+   :width: 100%
+   :align: center
+
+*Figure 5のSiO(s) sensitivity comparison。completedなfixed-boundary model columnを
+比較するものであり、論文のshooting solutionではない。*
+
+比較する量と比較しない量
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+solidなgasおよびcondensate curveはExoExamplesの結果だけを示す。gas mixing ratioは、
+explicit solver gas speciesの総和でnormalizeする。論文はatomic Hを含むneutral atomic
+curveも表示するが、それらはこのExoGibbs networkのexplicit speciesではない。またPDFは、
+断片化したすべてのgas/condensate pathとspecies名との信頼できるmachine-readableな対応を
+提供しない。このため公開されたcomposition curveをoverlayせず、model composition panelを
+like-for-likeなresidual comparisonとして解釈してはならない。condensate number densityは
+ExoGibbs amount gaugeからExoExamplesで再構成し、そのelement closure auditを
+``paper_comparison.json`` に記録する。
+
+dashed referenceとして表示するのは公開temperature curveだけである。これは論文PDFの
+8 pageと11 pageから抽出したvector coordinateであり、著者が提供したnumerical tableではない。
+checked-inの :download:`temperature reference CSV
+<../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.csv>` と
+:download:`provenance JSON
+<../../rocky_raccoon/data/rocky_raccoon_temperature_vector_reference.json>` は、extraction
+contract、paper hash、case、row countを記録する。extractorは太いconvective pathと細い
+non-convective pathを分離したまま保持し、公開pointを追加でinterpolateしない。このtraceは
+visual/shape comparisonのためのもので、likelihood計算には用いない。
+
+最後に、現在のmodelは :math:`P_\mathrm{base}` とluminosity :math:`L` を固定する。一方、
+論文はhydrogen envelope mass fraction :math:`f=0.03` とequilibrium temperature
+:math:`T_\mathrm{eq}=1000` Kを満たすように両者をshootingで解く。論文のabsolute elemental
+abundanceとnumerical transport tableも利用できない。したがってradiusとtemperatureの差は、
+現在のfixed-boundary model全体のmismatchを表す。chemistry accuracyだけを分離せず、
+reproduction errorでもない。
 
 testと保留項目
 --------------
@@ -499,6 +646,7 @@ boundary、解決済みstep 378/380、step 698、702、774、999、1082、さら
 再発は通常のtest failureとなる。
 
 上記completed runによりdefault fixed-boundary実装は検証済みだが、pressure-grid convergenceは
-未検証である。envelope massとouter temperatureに対するshooting、論文figure一式、non-ideal
-EOS/fugacity、magma--gas equilibrium、厳密な10-bar ExoJAX stitch、spectrum、retrievalは、
-documented grid-convergence studyが行われるまで保留する。
+未検証である。上のpaper-facing figureは利用可能なsaved columnのdiagnostic comparisonであり、
+論文全体の再現ではない。envelope massとouter temperatureに対するshooting、like-for-likeな
+公開composition curve、non-ideal EOS/fugacity、magma--gas equilibrium、厳密な10-bar ExoJAX
+stitch、spectrum、retrievalは、documented grid-convergence studyが行われるまで保留する。
